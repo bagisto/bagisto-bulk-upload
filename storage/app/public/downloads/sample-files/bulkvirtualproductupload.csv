@@ -1,0 +1,5 @@
+categories_slug,attribute_family_name,name,description,short_description,url_key,sku,price,special_price,special_price_from,special_price_to,tax_category_id,stock,meta_title,meta_keywords,meta_description,color,size,brand,type,new,featured,visible_individually,status,guest_checkout,inventory_sources,inventories,images,width
+root,default,temp1,temp1,temp1,cxvcx1,temp1,123,100,2016-05-26,2016-05-28,,123,Test Meta Title,Test Meta Keyword,Test Meta Description,Red,M,Nike,virtual,1,1,1,1,1,default,32,,32
+root,default,temp2,temp1,temp1,cxvcx2,temp2,123,100,2016-05-26,2016-05-28,,123,Test Meta Title,Test Meta Keyword,Test Meta Description,Red,M,Nike,virtual,1,1,1,1,1,default,32,,32
+root,default,temp3,temp1,temp1,cxvcx3,temp3,123,100,2016-05-26,2016-05-28,,123,Test Meta Title,Test Meta Keyword,Test Meta Description,Red,M,Nike,virtual,1,1,1,1,1,default,32,,32
+root,default,temp4,temp1,temp1,cxvcx4,temp4,123,100,2016-05-26,2016-05-28,,123,Test Meta Title,Test Meta Keyword,Test Meta Description,Red,M,Nike,virtual,1,1,1,1,1,default,32,,32
