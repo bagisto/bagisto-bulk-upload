@@ -1,0 +1,1 @@
+<link href="{{ asset('vendor/webkul/admin/assets/css/bk_upload.css') }}" rel="stylesheet" />
