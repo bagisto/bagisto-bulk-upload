@@ -5,7 +5,7 @@ return [
         'key'        => 'catalog.manage-bulk-upload',
         'name'       => 'bulkupload::app.admin.bulk-upload.manage-bulk-upload',
         'route'      => 'admin.dataflow-profile.index',
-        'sort'       => 4,
+        'sort'       => 5,
         'icon-class' => '',
     ], [
         'key'        => 'catalog.manage-bulk-upload.data-flow-profile',
