@@ -1,1 +1,54 @@
-<link href="{{ asset('vendor/webkul/admin/assets/css/bk_upload.css') }}" rel="stylesheet" />
+<style>
+    .bulk-upload-icon {
+        width: 48px;
+        height: 48px;
+        display: inline-block;
+        background-size: cover;
+        background-image: url("../images/Icon-Bulk-Upload.svg");
+    }
+
+    .active {
+        .bulk-upload-icon {
+            width: 48px;
+            height: 48px;
+            display: inline-block;
+            background-size: cover;
+            background-image: url("../images/Icon-Bulk-Upload-Active.svg");
+        }
+    }
+
+    progress {
+        margin: 15px 0px 15px 34px;
+        width: 70%;
+        height: 15px;
+    }
+
+    .icon {
+        background-size: cover;
+        display: inline-block;
+
+        &.check-accent {
+            width: 22px;
+            height: 18px;
+            background-image: url("../images/check-accent.svg");
+        }
+
+        &.icon-crossed {
+            width: 18px;
+            height: 15px;
+            background-image: url("../images/Icon-Crossed.svg");
+        }
+
+        &.cross-accent {
+            width: 22px;
+            height: 18px;
+            background-image: url("../images/cross-accent.svg");
+        }
+
+        &.finish-icon {
+            width: 22px;
+            height: 18px;
+            background-image: url("../images/finish.svg");
+        }
+    }
+</style>
