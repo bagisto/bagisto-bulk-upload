@@ -304,7 +304,7 @@ class BundledProductRepository extends Repository
 
         $data['categories'] = $categoryID;
         $data['channel'] = core()->getCurrentChannel()->code;
-        $data['locale'] = core()->getCurrentLocale()->code;
+        $data['locale'] = core()->getDefaultChannel()->default_locale->code;
 
         //prepare bundle options
         $bundleOptions = json_decode($csvData['bundle_options'], true);

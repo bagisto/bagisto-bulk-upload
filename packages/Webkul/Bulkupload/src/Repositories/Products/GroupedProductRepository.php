@@ -310,7 +310,7 @@ class GroupedProductRepository extends Repository
 
         $data['categories'] = $categoryID;
         $data['channel'] = core()->getCurrentChannel()->code;
-        $data['locale'] = core()->getCurrentLocale()->code;
+        $data['locale'] = core()->getDefaultChannel()->default_locale->code;
 
         //grouped product links
         if (isset($csvData['grouped_product_sku'])) {

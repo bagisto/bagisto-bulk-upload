@@ -360,7 +360,7 @@ class DownloadableProductRepository extends Repository
 
         $data['categories'] = $categoryID;
         $data['channel'] = core()->getCurrentChannel()->code;
-        $data['locale'] = core()->getCurrentLocale()->code;
+        $data['locale'] = core()->getDefaultChannel()->default_locale->code;
 
         //prepare downloadable sample data
         for ($j = 0; $j < count($sampleTitles); $j++) {

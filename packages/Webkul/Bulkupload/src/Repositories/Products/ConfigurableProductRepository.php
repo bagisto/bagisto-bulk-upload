@@ -238,7 +238,7 @@ class ConfigurableProductRepository extends Repository
 
                                     $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
                                     $data['channel'] = core()->getCurrentChannel()->code;
-                                    $data['locale'] = core()->getCurrentLocale()->code;
+                                    $data['locale'] = core()->getDefaultChannel()->default_locale->code;
 
                                     $categoryData = explode(',', $csvData[$i]['categories_slug']);
 
@@ -426,7 +426,7 @@ class ConfigurableProductRepository extends Repository
                                             }
 
                                             $data['channel'] = core()->getCurrentChannel()->code;
-                                            $data['locale'] = core()->getCurrentLocale()->code;
+                                            $data['locale'] = core()->getDefaultChannel()->default_locale->code;
                                             $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
                                             $data['price'] = (string)$csvData[$i]['super_attribute_price'];
                                             $data['special_price'] = (string)$csvData[$i]['special_price'];

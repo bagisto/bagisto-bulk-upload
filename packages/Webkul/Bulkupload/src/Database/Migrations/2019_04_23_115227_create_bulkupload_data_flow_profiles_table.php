@@ -17,7 +17,7 @@ class CreateBulkuploadDataflowprofilesTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->integer('attribute_family_id')->unsigned();
-            $table->foreign('attribute_family_id', 'mp_bulkupload_foreign_attribute_family_id')->references('id')->on('attribute_families')->onDelete('cascade');
+            $table->foreign('attribute_family_id', 'bulkupload_foreign_attribute_family_id')->references('id')->on('attribute_families')->onDelete('cascade');
             $table->boolean('run_status')->default(0);
             $table->timestamps();
         });

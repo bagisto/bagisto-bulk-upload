@@ -17,10 +17,10 @@ class CreateImportProductsTable extends Migration
             $table->increments('id');
 
             $table->integer('attribute_family_id')->unsigned();
-            $table->foreign('attribute_family_id', 'mp_import_admin_foreign_attribute_family_id')->references('id')->on('attribute_families')->onDelete('cascade');
+            $table->foreign('attribute_family_id', 'import_admin_foreign_attribute_family_id')->references('id')->on('attribute_families')->onDelete('cascade');
 
             $table->integer('data_flow_profile_id')->unsigned();
-            $table->foreign('data_flow_profile_id', 'mp_import_admin_foreign_data_flow_profile_id')->references('id')->on('bulkupload_data_flow_profiles')->onDelete('cascade');
+            $table->foreign('data_flow_profile_id', 'import_admin_foreign_data_flow_profile_id')->references('id')->on('bulkupload_data_flow_profiles')->onDelete('cascade');
 
             $table->boolean('is_downloadable')->default(0);
             $table->string('upload_link_files');
