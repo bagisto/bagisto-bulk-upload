@@ -264,12 +264,29 @@ class ConfigurableProductRepository extends Repository
                                                 $data['images'][$imageArraykey] = $imagePath;
                                             }
                                         }
+                                    } else if (isset($csvData['images'])) {
+                                        foreach ($individualProductimages as $imageArraykey => $imageURL)
+                                        {
+                                            $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
+
+                                            if (!file_exists($imagePath)) {
+                                                mkdir($imagePath, 0777, true);
+                                            }
+
+                                            $imageFile = $imagePath.'/'.basename($imageURL);
+
+                                            file_put_contents($imageFile, file_get_contents(trim($imageURL)));
+
+                                            $data['images'][$imageArraykey] = $imageFile;
+                                        }
                                     }
 
                                     $productAttributeStore = $this->bulkProductRepository->productRepositoryUpdateForVariants($data, $product->id);
 
                                     if (isset($imageZipName)) {
                                         $this->productImageRepository->bulkuploadImages($data, $product, $imageZipName);
+                                    } else if (isset($csvData['images'])) {
+                                        $this->productImageRepository->bulkuploadImages($data, $product, $imageZipName = null);
                                     }
 
                                     if (! isset($productFlatData) && empty($productFlatData)) {

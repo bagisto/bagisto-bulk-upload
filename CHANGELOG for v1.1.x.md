@@ -2,6 +2,11 @@
 
 #### This changelog consists the bug & security fixes and new features being included in the releases listed below.
 
+## **v1.1.2(28th of August, 2020)** - _Release_
+
+- [feature] Locale based product upload
+- [feature] Product image upload through url.
+
 ## **v1.1.0(19th of May, 2020)** - _Release_
 
 - [feature] Using the CSV or XLS files, the admin can upload the products in bulk.

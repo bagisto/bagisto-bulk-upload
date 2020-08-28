@@ -344,6 +344,21 @@ class BookingProductRepository extends Repository
                     $data['images'][$imageArraykey] = $imagePath;
                 }
                 }
+            } else if (isset($csvData['images'])) {
+                foreach ($individualProductimages as $imageArraykey => $imageURL)
+                {
+                    $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
+
+                    if (!file_exists($imagePath)) {
+                        mkdir($imagePath, 0777, true);
+                    }
+
+                    $imageFile = $imagePath.'/'.basename($imageURL);
+
+                    file_put_contents($imageFile, file_get_contents(trim($imageURL)));
+
+                    $data['images'][$imageArraykey] = $imageFile;
+                }
             }
 
             //  to check validation
@@ -390,6 +405,8 @@ class BookingProductRepository extends Repository
 
             if (isset($imageZipName)) {
                 $this->productImageRepository->bulkuploadImages($data, $bookingProductData, $imageZipName);
+            } else if (isset($csvData['images'])) {
+                $this->productImageRepository->bulkuploadImages($data, $bookingProductData, $imageZipName = null);
             }
         } catch(\Exception $e) {
             \Log::error('booking product store function'. $e->getMessage());

@@ -359,6 +359,21 @@ class SimpleProductRepository extends Repository
                         $data['images'][$imageArraykey] = $imagePath;
                     }
                 }
+            } else if (isset($csvData['images'])) {
+                foreach ($individualProductimages as $imageArraykey => $imageURL)
+                {
+                    $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
+
+                    if (!file_exists($imagePath)) {
+                        mkdir($imagePath, 0777, true);
+                    }
+
+                    $imageFile = $imagePath.'/'.basename($imageURL);
+
+                    file_put_contents($imageFile, file_get_contents(trim($imageURL)));
+
+                    $data['images'][$imageArraykey] = $imageFile;
+                }
             }
 
             $returnRules = $this->helperRepository->validateCSV($requestData['data_flow_profile_id'], $data, $dataFlowProfileRecord, $simpleproductData);
@@ -401,7 +416,9 @@ class SimpleProductRepository extends Repository
             $configSimpleProductAttributeStore = $this->productRepository->update($data, $simpleproductData->id);
 
             if (isset($imageZipName)) {
-                $this->productImageRepository->bulkuploadImages($data, $simpleproductData,    $imageZipName);
+                $this->productImageRepository->bulkuploadImages($data, $simpleproductData, $imageZipName);
+            } else if (isset($csvData['images'])) {
+                $this->productImageRepository->bulkuploadImages($data, $simpleproductData, $imageZipName = null);
             }
         } catch(\Exception $e) {
             \Log::error('simple product store function'. $e->getMessage());
