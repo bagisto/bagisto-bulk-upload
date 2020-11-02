@@ -24,6 +24,8 @@ class ProfileDataGrid extends DataGrid
             'bulkupload_data_flow_profiles.name as profile_name', 'attribute_families.name', 'bulkupload_data_flow_profiles.created_at');
 
         $this->addFilter('created_at', 'bulkupload_data_flow_profiles.created_at');
+        $this->addFilter('profile_name', 'bulkupload_data_flow_profiles.name');
+        $this->addFilter('name', 'attribute_families.name');
 
         $this->setQueryBuilder($queryBuilder);
     }
@@ -68,10 +70,11 @@ class ProfileDataGrid extends DataGrid
         ]);
 
         $this->addAction([
-            'type'   => 'Delete',
-            'method' => 'GET',
-            'route'  => 'bulkupload.admin.profile.delete',
-            'icon'   => 'icon trash-icon'
+            'type'          => trans('admin::app.datagrid.delete'),
+            'method'        => 'POST',
+            'route'         => 'bulkupload.admin.profile.delete',
+            'confirm_text'  => trans('ui::app.datagrid.massaction.delete'),
+            'icon'          => 'icon trash-icon'
         ]);
 
         $this->enableAction = true;
