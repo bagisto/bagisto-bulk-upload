@@ -1,22 +1,5 @@
+<link rel="stylesheet" href="{{ asset('themes/default/assets/css/bulk-admin.css') }}">
 <style>
-    .bulk-upload-icon {
-        width: 48px;
-        height: 48px;
-        display: inline-block;
-        background-size: cover;
-        background-image: url("../images/Icon-Bulk-Upload.svg");
-    }
-
-    .active {
-        .bulk-upload-icon {
-            width: 48px;
-            height: 48px;
-            display: inline-block;
-            background-size: cover;
-            background-image: url("../images/Icon-Bulk-Upload-Active.svg");
-        }
-    }
-
     progress {
         margin: 15px 0px 15px 34px;
         width: 70%;
