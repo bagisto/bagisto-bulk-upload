@@ -158,7 +158,7 @@ class BulkUploadController extends Controller
 
         session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-deleted'));
 
-        return redirect()->route('admin.dataflow-profile.index');
+        return response()->json(['message' => true], 200);
     }
 
     /**
