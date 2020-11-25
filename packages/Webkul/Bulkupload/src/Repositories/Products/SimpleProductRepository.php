@@ -430,7 +430,6 @@ class SimpleProductRepository extends Repository
                 $this->productImageRepository->bulkuploadImages($data, $simpleproductData, $imageZipName = null);
             }
         } catch(\Exception $e) {
-            dd($e);
             \Log::error('simple product store function'. $e->getMessage());
         }
     }
