@@ -292,15 +292,24 @@ class SimpleProductRepository extends Repository
 
             //default attributes
             foreach ($simpleproductData->getTypeInstance()->getEditableAttributes()->toArray() as $key => $value) {
-                $searchIndex = $value['code'];
+                $attributeOptionArray = array();
+                $searchIndex = strtolower($value['code']);
 
                 if (array_key_exists($searchIndex, $csvData)) {
+
                     array_push($attributeCode, $searchIndex);
 
-                    if ($searchIndex == "color" || $searchIndex == "size" || $searchIndex == "brand") {
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => ucwords($csvData[$searchIndex])]);
+                    if ($value['type'] == "select") {
+                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvData[$searchIndex]]);
 
                         array_push($attributeValue, $attributeOption['id']);
+                    } else if ($value['type'] == "checkbox") {
+                        $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $value['id'], 'admin_name' => $csvData[$searchIndex]]);
+
+                        array_push($attributeOptionArray, $attributeOption['id']);
+
+                        array_push($attributeValue, $attributeOptionArray);
+                        unset($attributeOptionArray);
                     } else {
                         array_push($attributeValue, $csvData[$searchIndex]);
                     }
@@ -421,6 +430,7 @@ class SimpleProductRepository extends Repository
                 $this->productImageRepository->bulkuploadImages($data, $simpleproductData, $imageZipName = null);
             }
         } catch(\Exception $e) {
+            dd($e);
             \Log::error('simple product store function'. $e->getMessage());
         }
     }
