@@ -521,17 +521,19 @@ class DownloadableProductRepository extends Repository
         } else if (isset($csvData['images'])) {
             foreach ($individualProductimages as $imageArraykey => $imageURL)
             {
-                $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
+                if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
+                    $imagePath = storage_path('app/public/imported-products/extracted-images/   admin/'.$dataFlowProfileRecord->id);
 
-                if (!file_exists($imagePath)) {
-                    mkdir($imagePath, 0777, true);
+                    if (!file_exists($imagePath)) {
+                        mkdir($imagePath, 0777, true);
+                    }
+
+                    $imageFile = $imagePath.'/'.basename($imageURL);
+
+                    file_put_contents($imageFile, file_get_contents(trim($imageURL)));
+
+                    $data['images'][$imageArraykey] = $imageFile;
                 }
-
-                $imageFile = $imagePath.'/'.basename($imageURL);
-
-                file_put_contents($imageFile, file_get_contents(trim($imageURL)));
-
-                $data['images'][$imageArraykey] = $imageFile;
             }
         }
 
