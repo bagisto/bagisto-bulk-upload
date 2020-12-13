@@ -1,8 +1,6 @@
 # Bagisto Bulk Upload
 
-## 1. Introduction:
-
-By using this add-on, admin can upload mass/bulk products of types simple, configurable, virtual, grouped, bundle, downloadable, booking.
+By using this add-on, the admin can mass/bulk upload products of all types: simple, configurable, virtual, grouped, bundle, downloadable, booking.
 
 It packs in lots of demanding features that allows your business to scale in no time:
 
@@ -12,11 +10,11 @@ It packs in lots of demanding features that allows your business to scale in no 
 - Image attachment with the product within CSV/XLS.
 - If there is any error in the CSV / XLS file, then products will not be uploaded and hence customer/admin will come to know about the error.
 
-## 2. Requirements:
+## Requirements:
 
 - **Bagisto**: v1.2.0
 
-## 3. Installation with composer:
+## Installation with composer:
 - Run the following commands
 ```
 composer require bagisto/bulk-upload
@@ -39,7 +37,7 @@ php artisan vendor:publish
 ```
 -> Press 0 and then press enter to publish all assets and configurations.
 
-## 4. Installation without composer:
+## Installation without composer:
 
 - Unzip the respective extension zip and then merge "packages" and "storage" folders into project root directory.
 - Goto config/app.php file and add following line under 'providers'
