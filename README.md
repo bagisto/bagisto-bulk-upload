@@ -26,7 +26,7 @@ Webkul\Bulkupload\Providers\BulkUploadServiceProvider::class
 - Goto composer.json file and add following line under 'psr-4'
 
 ```
-"Webkul\\Bulkupload\\": "packages/Webkul/Bulkupload"
+"Webkul\\Bulkupload\\": "packages/Webkul/Bulkupload/src"
 ```
 
 - Goto config/concord.php file and add following line under 'modules'

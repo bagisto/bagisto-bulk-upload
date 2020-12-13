@@ -42,7 +42,7 @@ Route::group(['middleware' => ['web']], function () {
             ])->name('bulk-upload-admin.run-profile');
 
             // edit actions
-            Route::get('/dataflowprofile/delete/{id}','Webkul\Bulkupload\Http\Controllers\Admin\BulkUploadController@destroy')->name('bulkupload.admin.profile.delete');
+            Route::post('/dataflowprofile/delete/{id}','Webkul\Bulkupload\Http\Controllers\Admin\BulkUploadController@destroy')->name('bulkupload.admin.profile.delete');
 
             Route::get('/dataflowprofile/edit/{id}', 'Webkul\Bulkupload\Http\Controllers\Admin\BulkUploadController@edit')->defaults('_config', [
                 'view' => 'bulkupload::admin.bulk-upload.data-flow-profile.edit'

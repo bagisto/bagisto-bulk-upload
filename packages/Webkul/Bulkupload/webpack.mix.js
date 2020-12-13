@@ -18,6 +18,11 @@ mix.copyDirectory(
         __dirname + "/src/Resources/assets/sass/app.scss",
         "css/bk_upload.css"
     )
+    .sass(
+        __dirname + "/src/Resources/assets/sass/admin.scss",
+        "css/bulk-admin.css"
+    )
+
     .options({
         processCssUrls: false
     });
