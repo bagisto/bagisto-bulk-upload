@@ -17,8 +17,9 @@ It packs in lots of demanding features that allows your business to scale in no 
 ## Installation with composer:
 - Run the following command
 ```
-composer require bagisto/bulk-upload
+composer require bagisto/bagisto-bulk-upload
 ```
+
 - Goto config/concord.php file and add following line under 'modules'
 ```php
 \Webkul\Bulkupload\Providers\ModuleServiceProvider::class
@@ -33,6 +34,7 @@ composer dump-autoload
 php artisan migrate
 php artisan storage:link
 php artisan route:cache
+php artisan config:cache
 php artisan vendor:publish
 ```
 -> Press 0 and then press enter to publish all assets and configurations.
