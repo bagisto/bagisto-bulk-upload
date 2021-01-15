@@ -20,6 +20,8 @@ It packs in lots of demanding features that allows your business to scale in no 
 composer require bagisto/bagisto-bulk-upload
 ```
 
+- Goto vendor/bagisto/bagisto-bulkupload and copy the storage folder and merge it into the root of your project.
+
 - Goto config/concord.php file and add following line under 'modules'
 ```php
 \Webkul\Bulkupload\Providers\ModuleServiceProvider::class
