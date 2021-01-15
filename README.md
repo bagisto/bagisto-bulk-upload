@@ -1,6 +1,6 @@
-### 1. Introduction:
+# Bagisto Bulk Upload
 
-Laravel Bulk Upload - Laravel Bulk Upload Products add-on is useful for bulk/mass upload of products. Using this admin can bulk upload using CSV, XLS. By using this add-on, admin can upload mass/bulk products of types simple, configurable, virtual, grouped, bundle, downloadable, booking.
+By using this add-on, the admin can mass/bulk upload products of all types: simple, configurable, virtual, grouped, bundle, downloadable, booking.
 
 It packs in lots of demanding features that allows your business to scale in no time:
 
@@ -10,11 +10,36 @@ It packs in lots of demanding features that allows your business to scale in no 
 - Image attachment with the product within CSV/XLS.
 - If there is any error in the CSV / XLS file, then products will not be uploaded and hence customer/admin will come to know about the error.
 
-### 2. Requirements:
+## Requirements:
 
-- **Bagisto**: v1.1.0
+- **Bagisto**: v1.2.0
 
-### 3. Installation:
+## Installation with composer:
+- Run the following command
+```
+composer require bagisto/bagisto-bulk-upload
+```
+
+- Goto config/concord.php file and add following line under 'modules'
+```php
+\Webkul\Bulkupload\Providers\ModuleServiceProvider::class
+```
+
+- Run these commands below to complete the setup
+```
+composer dump-autoload
+```
+
+```
+php artisan migrate
+php artisan storage:link
+php artisan route:cache
+php artisan config:cache
+php artisan vendor:publish
+```
+-> Press 0 and then press enter to publish all assets and configurations.
+
+## Installation without composer:
 
 - Unzip the respective extension zip and then merge "packages" and "storage" folders into project root directory.
 - Goto config/app.php file and add following line under 'providers'
@@ -31,7 +56,7 @@ Webkul\Bulkupload\Providers\BulkUploadServiceProvider::class
 
 - Goto config/concord.php file and add following line under 'modules'
 
-```
+```php
 \Webkul\Bulkupload\Providers\ModuleServiceProvider::class
 ```
 
