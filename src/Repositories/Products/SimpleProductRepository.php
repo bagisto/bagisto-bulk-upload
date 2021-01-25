@@ -324,7 +324,7 @@ class SimpleProductRepository extends Repository
             $inventoryCode = explode(',', $inventorySource);
 
             foreach ($inventoryCode as $key => $value) {
-                $inventoryId = $this->inventorySourceRepository->findOneByfield(['code' => trim($value)])->pluck('id')->toArray();
+                $inventoryId = $this->inventorySourceRepository->findWhere(['code' => trim($value)])->pluck('id')->toArray();
             }
 
             $inventoryData[] = (string)$csvData['inventories'];
