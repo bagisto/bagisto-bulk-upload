@@ -80,7 +80,7 @@ class ProductImageRepository extends Repository
     {
         if (isset($data['images'])) {
             foreach($data['images'] as $key => $value) {
-                if (is_null($imageZipName)) {
+                if (! is_null($imageZipName)) {
                     $files = "imported-products/extracted-images/admin/".$data['dataFlowProfileRecordId'].'/'. $imageZipName['dirname'].'/'.basename($value);
                 } else {
                     $files = "imported-products/extracted-images/admin/".$data['dataFlowProfileRecordId'].'/'.basename($value);
