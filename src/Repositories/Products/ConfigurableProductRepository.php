@@ -219,15 +219,23 @@ class ConfigurableProductRepository extends Repository
                                     $attributeValue = [];
 
                                     foreach ($product->getTypeInstance()->getEditableAttributes()->toArray() as $key => $value) {
-                                        $searchIndex = $value['code'];
+                                        $attributeOptionArray = array();
+                                        $searchIndex = strtolower($value['code']);
 
                                         if (array_key_exists($searchIndex, $csvData[$i])) {
                                             array_push($attributeCode, $searchIndex);
 
-                                            if ($searchIndex == "brand") {
-                                                $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => ucwords($csvData[$i][$searchIndex])]);
+                                            if ($value['type'] == "select") {
+                                                $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvData[$i][$searchIndex]]);
 
                                                 array_push($attributeValue, $attributeOption['id']);
+                                            } else if ($value['type'] == "checkbox") {
+                                                $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $value['id'], 'admin_name' => $csvData[$i][$searchIndex]]);
+
+                                                array_push($attributeOptionArray, $attributeOption['id']);
+
+                                                array_push($attributeValue, $attributeOptionArray);
+                                                unset($attributeOptionArray);
                                             } else {
                                                 array_push($attributeValue, $csvData[$i][$searchIndex]);
                                             }
@@ -267,17 +275,19 @@ class ConfigurableProductRepository extends Repository
                                     } else if (isset($csvData['images'])) {
                                         foreach ($individualProductimages as $imageArraykey => $imageURL)
                                         {
-                                            $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
+                                            if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
+                                                $imagePath = storage_path('app/public/  imported-products/extracted-images/admin/'.   $dataFlowProfileRecord->id);
 
-                                            if (!file_exists($imagePath)) {
-                                                mkdir($imagePath, 0777, true);
+                                                if (!file_exists($imagePath)) {
+                                                    mkdir($imagePath, 0777, true);
+                                                }
+
+                                                $imageFile = $imagePath.'/'.basename($imageURL) ;
+
+                                                file_put_contents($imageFile, file_get_contents (trim($imageURL)));
+
+                                                $data['images'][$imageArraykey] = $imageFile;
                                             }
-
-                                            $imageFile = $imagePath.'/'.basename($imageURL);
-
-                                            file_put_contents($imageFile, file_get_contents(trim($imageURL)));
-
-                                            $data['images'][$imageArraykey] = $imageFile;
                                         }
                                     }
 
@@ -537,7 +547,6 @@ class ConfigurableProductRepository extends Repository
         } catch(\Exception $e) {
             \Log::error('configurable create product log: '. $e->getMessage());
         }
-
     }
 
     /**
