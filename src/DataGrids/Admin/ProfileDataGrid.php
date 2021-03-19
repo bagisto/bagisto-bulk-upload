@@ -86,7 +86,7 @@ class ProfileDataGrid extends DataGrid
             'type'   => 'delete',
             'label'  => 'Delete',
             'action' => route('bulkupload.admin.profile.massDelete'),
-            'method' => 'DELETE'
+            'method' => 'POST'
         ]);
     }
 }
