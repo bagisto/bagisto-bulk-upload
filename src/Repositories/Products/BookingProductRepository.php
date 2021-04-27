@@ -15,6 +15,7 @@ use Webkul\Attribute\Repositories\AttributeFamilyRepository;
 use Webkul\Bulkupload\Repositories\Products\HelperRepository;
 use Webkul\Attribute\Repositories\AttributeOptionRepository;
 use Webkul\Bulkupload\Repositories\ProductImageRepository;
+use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
 
 class BookingProductRepository extends Repository
 {
@@ -281,6 +282,10 @@ class BookingProductRepository extends Repository
             foreach ($bookingProductData->getTypeInstance()->getEditableAttributes()->toArray() as $key => $value) {
                 $searchIndex = $value['code'];
                 if (array_key_exists($searchIndex, $csvData)) {
+                    if (is_null($csvData[$searchIndex])) {
+                        continue;
+                    }
+
                     array_push($attributeCode, $searchIndex);
 
                     if ($searchIndex == "color" || $searchIndex == "size" || $searchIndex == "brand") {
@@ -312,6 +317,12 @@ class BookingProductRepository extends Repository
 
             $data['channel'] = core()->getCurrentChannel()->code;
             $data['locale'] = core()->getDefaultChannel()->default_locale->code;
+
+            //customerGroupPricing
+            if (isset($csvData['customer_group_prices']) && ! empty($csvData['customer_group_prices'])) {
+                $data['customer_group_prices'] = json_decode($csvData['customer_group_prices'], true);
+                app(ProductCustomerGroupPriceRepository::class)->saveCustomerGroupPrices($data, $simpleproductData);
+            }
 
             //booking product attributes
 

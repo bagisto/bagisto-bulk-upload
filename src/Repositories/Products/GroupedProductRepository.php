@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Validator;
 use Webkul\Bulkupload\Repositories\ProductImageRepository;
 use Webkul\Attribute\Repositories\AttributeOptionRepository;
 use Illuminate\Support\Facades\Log;
+use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
 
 class GroupedProductRepository extends Repository
 {
@@ -282,6 +283,10 @@ class GroupedProductRepository extends Repository
             $searchIndex = $value['code'];
 
             if (array_key_exists($searchIndex, $csvData)) {
+                if (is_null($csvData[$searchIndex])) {
+                    continue;
+                }
+
                 array_push($attributeCode, $searchIndex);
 
                 if ($searchIndex == "color" || $searchIndex == "size" || $searchIndex == "brand") {
@@ -311,6 +316,12 @@ class GroupedProductRepository extends Repository
         $data['categories'] = $categoryID;
         $data['channel'] = core()->getCurrentChannel()->code;
         $data['locale'] = core()->getDefaultChannel()->default_locale->code;
+
+        //customerGroupPricing
+        if (isset($csvData['customer_group_prices']) && ! empty($csvData['customer_group_prices'])) {
+            $data['customer_group_prices'] = json_decode($csvData['customer_group_prices'], true);
+            app(ProductCustomerGroupPriceRepository::class)->saveCustomerGroupPrices($data, $simpleproductData);
+        }
 
         //grouped product links
         if (isset($csvData['grouped_product_sku'])) {

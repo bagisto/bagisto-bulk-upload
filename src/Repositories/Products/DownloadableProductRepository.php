@@ -17,6 +17,7 @@ use Webkul\Bulkupload\Repositories\Products\HelperRepository;
 use Webkul\Bulkupload\Repositories\ProductImageRepository;
 use Webkul\Attribute\Repositories\AttributeOptionRepository;
 use Webkul\Product\Repositories\ProductDownloadableLinkRepository;
+use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
 
 class DownloadableProductRepository extends Repository
 {
@@ -332,6 +333,10 @@ class DownloadableProductRepository extends Repository
         foreach ($downloadableProduct->getTypeInstance()->getEditableAttributes()->toArray() as $key => $value) {
             $searchIndex = $value['code'];
             if (array_key_exists($searchIndex, $csvData)) {
+                if (is_null($csvData[$searchIndex])) {
+                    continue;
+                }
+
                 array_push($attributeCode, $searchIndex);
 
                 if ($searchIndex == "color" || $searchIndex == "size" || $searchIndex == "brand") {
@@ -361,6 +366,13 @@ class DownloadableProductRepository extends Repository
         $data['categories'] = $categoryID;
         $data['channel'] = core()->getCurrentChannel()->code;
         $data['locale'] = core()->getDefaultChannel()->default_locale->code;
+
+        //customerGroupPricing
+        if (isset($csvData['customer_group_prices']) && ! empty($csvData['customer_group_prices'])) {
+            $data['customer_group_prices'] = json_decode($csvData['customer_group_prices'], true);
+            app(ProductCustomerGroupPriceRepository::class)->saveCustomerGroupPrices($data, $simpleproductData);
+        }
+
 
         //prepare downloadable sample data
         for ($j = 0; $j < count($sampleTitles); $j++) {
