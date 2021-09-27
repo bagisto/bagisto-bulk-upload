@@ -66,7 +66,9 @@ class ProfileDataGrid extends DataGrid
             'type'   => 'Edit',
             'method' => 'GET',
             'route'  => 'bulkupload.admin.profile.edit',
-            'icon'   => 'icon pencil-lg-icon'
+            'icon'   => 'icon pencil-lg-icon',
+            'title'  => ''
+
         ]);
 
         $this->addAction([
@@ -74,7 +76,8 @@ class ProfileDataGrid extends DataGrid
             'method'        => 'POST',
             'route'         => 'bulkupload.admin.profile.delete',
             'confirm_text'  => trans('ui::app.datagrid.massaction.delete'),
-            'icon'          => 'icon trash-icon'
+            'icon'          => 'icon trash-icon',
+            'title'         => ''
         ]);
 
         $this->enableAction = true;
@@ -86,7 +89,8 @@ class ProfileDataGrid extends DataGrid
             'type'   => 'delete',
             'label'  => 'Delete',
             'action' => route('bulkupload.admin.profile.massDelete'),
-            'method' => 'POST'
+            'method' => 'POST',
+            'title'  => ''
         ]);
     }
 }
