@@ -2,6 +2,13 @@
 
 return [
     'admin' => [
+        'system'    => [
+            'bulkupload'    => 'Bulk-Upload Product',
+            'settings'      => 'Settings',
+            'general'       => 'General',
+            'status'        => 'Status',
+        ],
+
         'bulk-upload' => [
             'index' => 'Bulkupload',
             'manage-bulk-upload' => 'Manage Bulk Upload',
