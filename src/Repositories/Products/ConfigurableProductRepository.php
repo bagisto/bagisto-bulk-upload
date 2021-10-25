@@ -222,7 +222,7 @@ class ConfigurableProductRepository extends Repository
                                     $data = [];
                                     $attributeCode = [];
                                     $attributeValue = [];
-// dd($product->getTypeInstance()->getEditableAttributes()->toArray());
+
                                     foreach ($product->getTypeInstance()->getEditableAttributes()->toArray() as $key => $value) {
                                         $attributeOptionArray = [];
                                         $searchIndex = strtolower($value['code']);
