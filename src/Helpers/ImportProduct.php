@@ -49,8 +49,9 @@ class ImportProduct
     public function store()
     {
         request()->validate ([
-            'attribute_family' => 'required',
-            'file_path' => 'required',
+            'attribute_family'  => 'required',
+            'file_path'         => 'required',
+            'image_path'        => 'mimetypes:application/zip|max:10000',
             'data_flow_profile' => 'required',
         ]);
 
@@ -121,9 +122,9 @@ class ImportProduct
         $product['data_flow_profile_id'] = $data_flow_profile_id;
         $product['attribute_family_id'] = $attribute_family_id;
 
-        if (( !empty($image) && in_array($image->getClientOriginalExtension(), $valid_image_extension)) && (in_array($file->getClientOriginalExtension(), $valid_extension))) {
+        if ((! empty($image) && in_array($image->getClientOriginalExtension(), $valid_image_extension)) && (in_array($file->getClientOriginalExtension(), $valid_extension))) {
             $uploadedImage = $image->storeAs($imageDir, uniqid().'.'.$image->getClientOriginalExtension());
-
+            
             $product['image_path'] = $uploadedImage;
 
             $uploadedFile = $file->storeAs($fileDir, uniqid().'.'.$file->getClientOriginalExtension());

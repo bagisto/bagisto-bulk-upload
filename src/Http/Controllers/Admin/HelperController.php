@@ -264,51 +264,49 @@ class HelperController extends Controller
             if (isset($dataFlowProfileRecord->image_path) && ($dataFlowProfileRecord->image_path != "") ) {
                 $imageZipName = $this->storeImageZip($dataFlowProfileRecord);
             }
+            
+            if ($numberOfCSVRecord >= 0) {
+                for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
+                    $product['loopCount'] = $i;
 
-            // foreach ($csvData as $key => $value) {
-                if ($numberOfCSVRecord >= 0) {
-                    for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
-                        $product['loopCount'] = $i;
+                    switch($csvData[$i]['type']) {
+                        case "simple":
+                            $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $product);
 
-                        switch($csvData[$i]['type']) {
-                            case "simple":
-                                $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $product);
+                            return response()->json($simpleProduct);
 
-                                return response()->json($simpleProduct);
+                        case "virtual":
+                            $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
 
-                            case "virtual":
-                                $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($virtualProduct);
+                        case "downloadable":
+                            $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($virtualProduct);
-                            case "downloadable":
-                                $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($downloadableProduct);
+                        case "grouped":
+                            $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($downloadableProduct);
-                            case "grouped":
-                                $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($groupedProduct);
+                        case "booking":
+                            $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($groupedProduct);
-                            case "booking":
-                                $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($bookingProduct);
+                        case "bundle":
+                            $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($bookingProduct);
-                            case "bundle":
-                                $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($bundledProduct);
+                        case "configurable" OR "variant":
+                            $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
 
-                                return response()->json($bundledProduct);
-                            case "configurable" OR "variant":
-                                $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
-
-                                return response()->json($configurableProduct);
-                        }
+                            return response()->json($configurableProduct);
                     }
-                } else {
-                    return response()->json([
-                        "success" => true,
-                        "message" => "CSV Product Successfully Imported"
-                    ]);
                 }
-            // }
+            } else {
+                return response()->json([
+                    "success" => true,
+                    "message" => "CSV Product Successfully Imported"
+                ]);
+            }
         }
     }
 
