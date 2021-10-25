@@ -500,7 +500,6 @@ class ConfigurableProductRepository extends Repository
                                             if ( isset($data['super_attributes'])) {
                                                 foreach ($data['super_attributes'] as $attributeCode => $attributeOptions) {
                                                     $attribute = $this->attributeRepository->findOneByField('code', $attributeCode);
-<<<<<<< HEAD
 
                                                     if ( $attribute ) {
                                                         $attributeOptionColor = $this->attributeOptionRepository->findOneWhere([
@@ -508,15 +507,6 @@ class ConfigurableProductRepository extends Repository
                                                             'admin_name'    => $attributeOptions,
                                                         ]);
 
-=======
-
-                                                    if ( $attribute ) {
-                                                        $attributeOptionColor = $this->attributeOptionRepository->findOneWhere([
-                                                            'attribute_id'  => $attribute->id,
-                                                            'admin_name'    => $attributeOptions,
-                                                        ]);
-
->>>>>>> 7e4630512cc602d30733d2b605edf23900b7aa0e
                                                         $data[$attributeCode] = $attributeOptionColor->id;
                                                     }
                                                 }
