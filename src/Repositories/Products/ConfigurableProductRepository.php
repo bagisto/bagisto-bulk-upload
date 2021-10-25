@@ -2,8 +2,8 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Storage;
-use DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Container\Container as App;
 use Webkul\Admin\Imports\DataGridImport;
 use Illuminate\Support\Facades\Schema;
@@ -191,24 +191,29 @@ class ConfigurableProductRepository extends Repository
                                 try {
                                     $createValidation = $this->helperRepository->createProductValidation($csvData[$i], $i);
 
-                                    if (isset($createValidation)) {
+                                    if ( isset($createValidation)) {
                                         return $createValidation;
                                     }
 
                                     unset($data);
 
-                                    $productFlatData = $this->productFlatRepository->findWhere(['sku' => $csvData[$i]['sku'], 'url_key' => $csvData[$i]['url_key']])->first();
+                                    $productFlatData = $this->productFlatRepository->findOneWhere([
+                                        'sku'       => $csvData[$i]['sku'],
+                                        'url_key'   => $csvData[$i]['url_key']
+                                    ]);
 
-                                    $productData = $this->productRepository->findWhere(['sku' => $csvData[$i]['sku']])->first();
+                                    $productData = $this->productRepository->findOneWhere([
+                                        'sku'   => $csvData[$i]['sku']
+                                        ]);
 
-                                    $attributeFamilyData = $this->attributeFamilyRepository->findOneByfield(['name' => $csvData[$i]['attribute_family_name']]);
+                                    $attributeFamilyData = $this->attributeFamilyRepository->findOneByfield('name', $csvData[$i]['attribute_family_name']);
 
-                                    if (! isset($productFlatData) && empty($productFlatData)) {
+                                    if (! isset($productFlatData) && empty($productData)) {
                                         $data['type'] = $csvData[$i]['type'];
                                         $data['attribute_family_id'] = $attributeFamilyData->id;
                                         $data['sku'] = $csvData[$i]['sku'];
 
-                                       $product = $this->bulkProductRepository->create($data);
+                                        $product = $this->bulkProductRepository->create($data);
                                     } else {
                                         $product = $productData;
                                     }
@@ -217,24 +222,33 @@ class ConfigurableProductRepository extends Repository
                                     $data = [];
                                     $attributeCode = [];
                                     $attributeValue = [];
-
+// dd($product->getTypeInstance()->getEditableAttributes()->toArray());
                                     foreach ($product->getTypeInstance()->getEditableAttributes()->toArray() as $key => $value) {
-                                        $attributeOptionArray = array();
+                                        $attributeOptionArray = [];
                                         $searchIndex = strtolower($value['code']);
 
                                         if (array_key_exists($searchIndex, $csvData[$i])) {
+                                            if ($searchIndex == 'tax_category_id') {
+                                                continue;
+                                            }
+
                                             array_push($attributeCode, $searchIndex);
 
                                             if ($value['type'] == "select") {
-                                                $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvData[$i][$searchIndex]]);
+                                                $attributeOption = $this->attributeOptionRepository->findOneByField('admin_name', $csvData[$i][$searchIndex]);
 
-                                                array_push($attributeValue, $attributeOption['id']);
+                                                array_push($attributeValue, (isset($attributeOption['id']) ? $attributeOption['id'] : null));
+                                                
                                             } else if ($value['type'] == "checkbox") {
-                                                $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $value['id'], 'admin_name' => $csvData[$i][$searchIndex]]);
+                                                $attributeOption = $this->attributeOptionRepository->findOneWhere([
+                                                    'attribute_id'  => $value['id'],
+                                                    'admin_name'    => $csvData[$i][$searchIndex]
+                                                ]);
 
-                                                array_push($attributeOptionArray, $attributeOption['id']);
+                                                array_push($attributeOptionArray, (isset($attributeOption['id']) ? $attributeOption['id'] : null));
 
                                                 array_push($attributeValue, $attributeOptionArray);
+
                                                 unset($attributeOptionArray);
                                             } else {
                                                 array_push($attributeValue, $csvData[$i][$searchIndex]);
@@ -247,6 +261,8 @@ class ConfigurableProductRepository extends Repository
                                     $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
                                     $data['channel'] = core()->getCurrentChannel()->code;
                                     $data['locale'] = core()->getDefaultChannel()->default_locale->code;
+
+                                    $data['tax_category_id'] = (isset($csvData[$i]['tax_category_id']) && $csvData[$i]['tax_category_id']) ? $csvData[$i]['tax_category_id'] : null;
 
                                     $categoryData = explode(',', $csvData[$i]['categories_slug']);
 
@@ -355,18 +371,24 @@ class ConfigurableProductRepository extends Repository
                                         $product['loopCount'] = $i;
 
                                         if ($csvData[$i]['type'] != 'configurable') {
-                                            unset($data);
-                                            $productFlatData = $this->productFlatRepository->findWhere(['sku' => $csvData[$i]['sku'], 'url_key' => null])->first();
+                                            $productFlatData = $this->productFlatRepository->findOneWhere([
+                                                'sku'       => $csvData[$i]['sku'],
+                                                'url_key'   => null
+                                            ]);
 
-                                            $productData = $this->productRepository->findWhere(['sku' => $csvData[$i]['sku']])->first();
+                                            $productData = $this->productRepository->findOneWhere([
+                                                'sku'   => $csvData[$i]['sku']
+                                                ]);
 
-                                            $attributeFamilyData = $this->attributeFamilyRepository->findOneByfield(['name' => $csvData[$i]['attribute_family_name']]);
+                                            $attributeFamilyData = $this->attributeFamilyRepository->findOneWhere([
+                                                'name' => $csvData[$i]['attribute_family_name']
+                                            ]);
 
-                                            if (! isset($productFlatData) && empty($productFlatData)) {
-                                                $data['parent_id'] = $product->id;
-                                                $data['type'] = "simple";
+                                            if (! isset($productFlatData) && empty($productData)) {
+                                                $data['parent_id']  = $product->id;
+                                                $data['type']       = "simple";
                                                 $data['attribute_family_id'] = $attributeFamilyData->id;
-                                                $data['sku'] = $csvData[$i]['sku'];
+                                                $data['sku']        = $csvData[$i]['sku'];
 
                                                 $configSimpleproduct = $this->productRepository->create($data);
                                             } else {
@@ -376,12 +398,12 @@ class ConfigurableProductRepository extends Repository
                                             unset($data);
 
                                             $validateVariant = Validator::make($csvData[$i], [
-                                                'sku' => ['required', 'unique:products,sku,' . $configSimpleproduct->id, new \Webkul\Core\Contracts\Validations\Slug],
-                                                'name' => 'required',
-                                                'super_attribute_price' => 'required',
-                                                'super_attribute_weight' => 'required',
-                                                'super_attribute_option' => 'required',
-                                                'super_attributes' => 'required'
+                                                'sku'                       => ['required', 'unique:products,sku,' . $configSimpleproduct->id, new \Webkul\Core\Contracts\Validations\Slug],
+                                                'name'                      => 'required',
+                                                'super_attribute_price'     => 'required',
+                                                'super_attribute_weight'    => 'required',
+                                                'super_attribute_option'    => 'required',
+                                                'super_attributes'          => 'required'
                                             ]);
 
                                             if ($validateVariant->fails()) {
@@ -425,7 +447,7 @@ class ConfigurableProductRepository extends Repository
                                                 $inventory[$inventoryId] = $d;
                                             }
 
-                                            $productInventory = $this->productInventoryRepository->findOneByField([ 'product_id' => $configSimpleproduct->id]);
+                                            $productInventory = $this->productInventoryRepository->findOneByField('product_id', $configSimpleproduct->id);
 
                                             if (! isset($productInventory) && empty($productInventory) || $productInventory->count() < 1) {
                                                 $data['inventories'] =  $inventory;
@@ -475,11 +497,18 @@ class ConfigurableProductRepository extends Repository
                                             $data['weight'] = (string)$csvData[$i]['super_attribute_weight'];
                                             $data['status'] = (string)$csvData[$i]['status'];
 
-                                            if (isset($data['super_attributes'])) {
+                                            if ( isset($data['super_attributes'])) {
                                                 foreach ($data['super_attributes'] as $attributeCode => $attributeOptions) {
-                                                    $attributeOptionColor = $this->attributeOptionRepository->findOneByField('admin_name', $attributeOptions);
+                                                    $attribute = $this->attributeRepository->findOneByField('code', $attributeCode);
 
-                                                    $data[$attributeCode] = $attributeOptionColor->id;
+                                                    if ( $attribute ) {
+                                                        $attributeOptionColor = $this->attributeOptionRepository->findOneWhere([
+                                                            'attribute_id'  => $attribute->id,
+                                                            'admin_name'    => $attributeOptions,
+                                                        ]);
+
+                                                        $data[$attributeCode] = $attributeOptionColor->id;
+                                                    }
                                                 }
                                             }
 
@@ -497,9 +526,9 @@ class ConfigurableProductRepository extends Repository
                                             $requestData['countOfStartedProfiles'] = $product['loopCount'];
 
                                             $dataToBeReturn = array(
-                                                'remainDataInCSV' => $remainDataInCSV,
-                                                'productsUploaded' => $productsUploaded,
-                                                'countOfStartedProfiles' => $requestData['countOfStartedProfiles']
+                                                'remainDataInCSV'           => $remainDataInCSV,
+                                                'productsUploaded'          => $productsUploaded,
+                                                'countOfStartedProfiles'    => $requestData['countOfStartedProfiles']
                                             );
 
                                             return $dataToBeReturn;

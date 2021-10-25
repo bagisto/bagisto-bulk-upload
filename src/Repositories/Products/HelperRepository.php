@@ -176,12 +176,12 @@ class HelperRepository extends Repository
     {
         try {
             $validateProduct = Validator::make($record, [
-                'type' => 'required',
-                'sku' => 'required',
+                'type'                  => 'required',
+                'sku'                   => 'required',
                 'attribute_family_name' => 'required'
             ]);
 
-            if ($validateProduct->fails()) {
+            if ( $validateProduct->fails() ) {
                 $errors = $validateProduct->errors()->getMessages();
 
                 foreach($errors as $key => $error) {
@@ -201,10 +201,10 @@ class HelperRepository extends Repository
                 }
 
                 $dataToBeReturn = array(
-                    'remainDataInCSV' => $remainDataInCSV,
-                    'productsUploaded' => $productsUploaded,
-                    'countOfStartedProfiles' => request()->countOfStartedProfiles,
-                    'error' => $errorToBeReturn,
+                    'remainDataInCSV'           => $remainDataInCSV,
+                    'productsUploaded'          => $productsUploaded,
+                    'countOfStartedProfiles'    => request()->countOfStartedProfiles,
+                    'error'                     => $errorToBeReturn,
                 );
 
                 return $dataToBeReturn;
