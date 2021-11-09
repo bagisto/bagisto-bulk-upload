@@ -173,7 +173,7 @@ class HelperController extends Controller
             if (request()->download_sample == $key.'-csv') {
                 return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.csv'));
             } else if (request()->download_sample == $key.'-xls') {
-                return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.csv'));
+                return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.xlsx'));
             } else if (empty(request()->download_sample)) {
                 return redirect()->back();
             }
@@ -264,7 +264,7 @@ class HelperController extends Controller
             if (isset($dataFlowProfileRecord->image_path) && ($dataFlowProfileRecord->image_path != "") ) {
                 $imageZipName = $this->storeImageZip($dataFlowProfileRecord);
             }
-            
+
             if ($numberOfCSVRecord >= 0) {
                 for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
                     $product['loopCount'] = $i;
