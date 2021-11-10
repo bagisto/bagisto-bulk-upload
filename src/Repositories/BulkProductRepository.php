@@ -2,7 +2,7 @@
 
 namespace Webkul\Bulkupload\Repositories;
 
-use Storage;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Event;
 use Webkul\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
@@ -122,19 +122,19 @@ class BulkProductRepository extends Repository
             }
 
             $attributeValue = $this->productAttributeValueRepository->findOneWhere([
-                    'product_id' => $product->id,
-                    'attribute_id' => $attribute->id,
-                    'channel' => $attribute->value_per_channel ? $data['channel'] : null,
-                    'locale' => $attribute->value_per_locale ? $data['locale'] : null
+                    'product_id'    => $product->id,
+                    'attribute_id'  => $attribute->id,
+                    'channel'       => $attribute->value_per_channel ? $data['channel'] : null,
+                    'locale'        => $attribute->value_per_locale ? $data['locale'] : null
                 ]);
 
             if (! $attributeValue) {
                 $this->productAttributeValueRepository->create([
-                    'product_id' => $product->id,
-                    'attribute_id' => $attribute->id,
-                    'value' => $data[$attribute->code],
-                    'channel' => $attribute->value_per_channel ? $data['channel'] : null,
-                    'locale' => $attribute->value_per_locale ? $data['locale'] : null
+                    'product_id'    => $product->id,
+                    'attribute_id'  => $attribute->id,
+                    'value'         => $data[$attribute->code],
+                    'channel'       => $attribute->value_per_channel ? $data['channel'] : null,
+                    'locale'        => $attribute->value_per_locale ? $data['locale'] : null
                 ]);
             } else {
                 $this->productAttributeValueRepository->update([

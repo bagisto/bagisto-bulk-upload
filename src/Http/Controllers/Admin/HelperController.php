@@ -173,7 +173,7 @@ class HelperController extends Controller
             if (request()->download_sample == $key.'-csv') {
                 return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.csv'));
             } else if (request()->download_sample == $key.'-xls') {
-                return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.csv'));
+                return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.xlsx'));
             } else if (empty(request()->download_sample)) {
                 return redirect()->back();
             }
@@ -265,50 +265,48 @@ class HelperController extends Controller
                 $imageZipName = $this->storeImageZip($dataFlowProfileRecord);
             }
 
-            // foreach ($csvData as $key => $value) {
-                if ($numberOfCSVRecord >= 0) {
-                    for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
-                        $product['loopCount'] = $i;
+            if ($numberOfCSVRecord >= 0) {
+                for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
+                    $product['loopCount'] = $i;
 
-                        switch($csvData[$i]['type']) {
-                            case "simple":
-                                $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $product);
+                    switch($csvData[$i]['type']) {
+                        case "simple":
+                            $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $product);
 
-                                return response()->json($simpleProduct);
+                            return response()->json($simpleProduct);
 
-                            case "virtual":
-                                $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
+                        case "virtual":
+                            $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($virtualProduct);
-                            case "downloadable":
-                                $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($virtualProduct);
+                        case "downloadable":
+                            $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($downloadableProduct);
-                            case "grouped":
-                                $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($downloadableProduct);
+                        case "grouped":
+                            $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($groupedProduct);
-                            case "booking":
-                                $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($groupedProduct);
+                        case "booking":
+                            $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($bookingProduct);
-                            case "bundle":
-                                $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
+                            return response()->json($bookingProduct);
+                        case "bundle":
+                            $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
 
-                                return response()->json($bundledProduct);
-                            case "configurable" OR "variant":
-                                $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
+                            return response()->json($bundledProduct);
+                        case "configurable" OR "variant":
+                            $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
 
-                                return response()->json($configurableProduct);
-                        }
+                            return response()->json($configurableProduct);
                     }
-                } else {
-                    return response()->json([
-                        "success" => true,
-                        "message" => "CSV Product Successfully Imported"
-                    ]);
                 }
-            // }
+            } else {
+                return response()->json([
+                    "success" => true,
+                    "message" => "CSV Product Successfully Imported"
+                ]);
+            }
         }
     }
 

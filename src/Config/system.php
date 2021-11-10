@@ -4,7 +4,7 @@ return [
     [
         'key'       => 'bulkupload',
         'name'      => 'bulkupload::app.admin.system.bulkupload',
-        'sort'      => 1
+        'sort'      => 5
     ], [
         'key'       => 'bulkupload.settings',
         'name'      => 'bulkupload::app.admin.system.settings',
@@ -15,9 +15,11 @@ return [
         'sort'      => 1,
         'fields'    => [
             [
-                'name'  => 'status',
-                'title' => 'bulkupload::app.admin.system.status',
-                'type'  => 'boolean'
+                'name'          => 'status',
+                'title'         => 'bulkupload::app.admin.system.status',
+                'type'          => 'boolean',
+                'channel_based' => true,
+                'locale_based'  => false
             ]
         ]
     ]
