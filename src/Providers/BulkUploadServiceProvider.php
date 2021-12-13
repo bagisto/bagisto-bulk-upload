@@ -23,6 +23,10 @@ class BulkUploadServiceProvider extends ServiceProvider
             __DIR__ . '/../../publishable/assets' => public_path('themes/default/assets'),
         ], 'public');
 
+        $this->publishes([
+            __DIR__ . '/../Resources/views/admin/bulk-upload/layouts/nav-aside.blade.php' => resource_path('views/vendor/admin/layouts/nav-aside.blade.php'),
+        ]);
+
         view()->composer(['bulkupload::admin.bulk-upload.upload-files.index'], function ($view) {
             $items = [];
 
@@ -58,7 +62,7 @@ class BulkUploadServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             dirname(__DIR__) . '/Config/system.php', 'core'
         );
-        
+
         $this->mergeConfigFrom(
             dirname(__DIR__) . '/Config/admin-menu.php', 'menu.admin'
         );
