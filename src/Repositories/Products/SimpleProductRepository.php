@@ -358,7 +358,10 @@ class SimpleProductRepository extends Repository
 
             $data['categories'] = $categoryID;
             $data['channel'] = core()->getCurrentChannel()->code;
-            $data['locale'] = core()->getDefaultChannel()->default_locale->code;
+
+            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
+
+            $data['locale'] = $dataProfile->locale_code;
 
             //customerGroupPricing
             if (isset($csvData['customer_group_prices']) && ! empty($csvData['customer_group_prices'])) {

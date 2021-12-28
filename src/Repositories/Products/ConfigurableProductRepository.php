@@ -260,7 +260,9 @@ class ConfigurableProductRepository extends Repository
 
                                     $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
                                     $data['channel'] = core()->getCurrentChannel()->code;
-                                    $data['locale'] = core()->getDefaultChannel()->default_locale->code;
+
+                                    $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
+                                    $data['locale'] = $dataProfile->locale_code;
 
                                     $data['tax_category_id'] = (isset($csvData[$i]['tax_category_id']) && $csvData[$i]['tax_category_id']) ? $csvData[$i]['tax_category_id'] : null;
 
@@ -475,7 +477,10 @@ class ConfigurableProductRepository extends Repository
                                             }
 
                                             $data['channel'] = core()->getCurrentChannel()->code;
-                                            $data['locale'] = core()->getDefaultChannel()->default_locale->code;
+
+                                            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
+                                            $data['locale'] = $dataProfile->locale_code;
+
                                             $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
                                             $data['price'] = (string)$csvData[$i]['super_attribute_price'];
                                             $data['special_price'] = (string)$csvData[$i]['special_price'];
