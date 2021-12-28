@@ -102,11 +102,14 @@ class BulkUploadController extends Controller
     {
         request()->validate([
             'name' => 'required|unique:bulkupload_data_flow_profiles',
-            'attribute_family' => 'required'
+            'attribute_family' => 'required',
+            'locale_code' => 'required'
         ]);
 
         $dataFlowProfileAdmin['name'] = request()->name;
         $dataFlowProfileAdmin['attribute_family_id'] = request()->attribute_family;
+        $dataFlowProfileAdmin['locale_code'] = request()->locale_code;
+
 
         $this->dataFlowProfileRepository->create($dataFlowProfileAdmin);
 
