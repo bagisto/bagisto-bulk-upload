@@ -476,12 +476,12 @@ class ConfigurableProductRepository extends Repository
                                                 }
                                             }
 
+                                            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
                                             $data['channel'] = core()->getCurrentChannel()->code;
 
                                             $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
                                             $data['locale'] = $dataProfile->locale_code;
 
-                                            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
                                             $data['price'] = (string)$csvData[$i]['super_attribute_price'];
                                             $data['special_price'] = (string)$csvData[$i]['special_price'];
                                             $data['special_price_from'] = (string)$csvData[$i]['special_price_from'];
