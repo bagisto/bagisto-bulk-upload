@@ -258,7 +258,7 @@ class ConfigurableProductRepository extends Repository
                                         }
                                     }
 
-                                    $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
+                                    $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->data_flow_profile_id;
                                     $data['channel'] = core()->getCurrentChannel()->code;
 
                                     $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
@@ -476,7 +476,7 @@ class ConfigurableProductRepository extends Repository
                                                 }
                                             }
 
-                                            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
+                                            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->data_flow_profile_id;
                                             $data['channel'] = core()->getCurrentChannel()->code;
 
                                             $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
