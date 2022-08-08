@@ -199,7 +199,7 @@ class BulkProductRepository extends Repository
 
             $this->productInventoryRepository->saveInventories($data, $product);
 
-            $this->productImageRepository->uploadImages($data, $product);
+            // $this->productImageRepository->uploadImages($data, $product);
         }
 
         if (isset($data['channels'])) {
