@@ -22,7 +22,8 @@ return [
                 'update-profile' => 'Update',
 
                 'data-grid' => [
-                    'created-at' => 'Created At'
+                    'created-at' => 'Created At',
+                    'locale_code' => 'Locale code'
                 ]
             ],
 

@@ -42,6 +42,19 @@
                 <span class="control-error">{{ $errors->first('attribute_family') }}</span>
             </div>
 
+            <div class="control-group" :class="[errors.has('locale_code') ? 'has-error' : '']">
+                <label for="locale_code" class="required">{{ __('admin::app.settings.channels.default-locale') }}</label>
+
+                <select v-validate="'required'" class="control" id="locale_code" name="locale_code" data-vv-as="&quot;{{ __('admin::app.settings.channels.default-locale') }}&quot;">
+                    @foreach (core()->getAllLocales() as $localeModel)
+                        <option value="{{ $localeModel->code }}">
+                            {{ $localeModel->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <span class="control-error" v-if="errors.has('locale_code')">@{{ errors.first('locale_code') }}</span>
+            </div>
+
             <div class="page-action" style="display:flex; justify-content: space-between;">
                 <button type="submit" class="btn btn-lg btn-primary">
                     {{ __('bulkupload::app.admin.bulk-upload.upload-files.save')  }}

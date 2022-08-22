@@ -21,7 +21,7 @@ class ProfileDataGrid extends DataGrid
         $queryBuilder = DB::table('bulkupload_data_flow_profiles')
             ->leftJoin('attribute_families', 'bulkupload_data_flow_profiles.attribute_family_id', '=', 'attribute_families.id')
             ->select('bulkupload_data_flow_profiles.id',
-            'bulkupload_data_flow_profiles.name as profile_name', 'attribute_families.name', 'bulkupload_data_flow_profiles.created_at');
+            'bulkupload_data_flow_profiles.name as profile_name', 'attribute_families.name', 'bulkupload_data_flow_profiles.locale_code', 'bulkupload_data_flow_profiles.created_at');
 
         $this->addFilter('created_at', 'bulkupload_data_flow_profiles.created_at');
         $this->addFilter('profile_name', 'bulkupload_data_flow_profiles.name');
@@ -44,6 +44,15 @@ class ProfileDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'name',
             'label'      => trans('admin::app.catalog.products.familiy'),
+            'type'       => 'string',
+            'searchable' => true,
+            'sortable'   => true,
+            'filterable' => true
+        ]);
+
+        $this->addColumn([
+            'index'      => 'locale_code',
+            'label'      => trans('bulkupload::app.admin.bulk-upload.data-flow-profile.data-grid.locale_code'),
             'type'       => 'string',
             'searchable' => true,
             'sortable'   => true,
