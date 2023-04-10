@@ -4,10 +4,18 @@
     {{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.index') }}
 @stop
 
+@push('css')
+    <style>
+        .ms-15 {
+            margin-left: 15px !important;
+        }
+    </style>
+@endpush
+
 @section('content')
 
-   <!-- Import New products -->
-    <div class="import-new-products mt-45">
+    <!-- Import New products -->
+    <div class="import-new-products mt-45 ms-15">
         <div class="heading mb-25">
             <h1>{{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.add-profile') }}</h1>
         </div>
