@@ -54,6 +54,9 @@
                 <label for="locale_code" class="required">{{ __('admin::app.settings.channels.default-locale') }}</label>
 
                 <select v-validate="'required'" class="control" id="locale_code" name="locale_code" data-vv-as="&quot;{{ __('admin::app.settings.channels.default-locale') }}&quot;">
+                    <option value="">
+                        {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
+                    </option>
                     @foreach (core()->getAllLocales() as $localeModel)
                         <option value="{{ $localeModel->code }}">
                             {{ $localeModel->name }}
