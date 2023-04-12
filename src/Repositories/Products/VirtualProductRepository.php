@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Admin\Imports\DataGridImport;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Event;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Bulkupload\Repositories\ImportProductRepository;
 use Webkul\Product\Repositories\ProductFlatRepository;
@@ -278,8 +279,10 @@ class VirtualProductRepository extends Repository
                 $data['type'] = $csvData['type'];
                 $data['attribute_family_id'] = $attributeFamilyData->id;
                 $data['sku'] = $csvData['sku'];
-
+                Event::dispatch('catalog.product.create.before');
                 $virtualProductData = $this->productRepository->create($data);
+                Event::dispatch('catalog.product.create.after', $virtualProductData);
+
             } else {
                 $virtualProductData = $productData;
             }
@@ -426,7 +429,9 @@ class VirtualProductRepository extends Repository
                 return $dataToBeReturn;
             }
 
-            $this->productRepository->update($data, $virtualProductData->id);
+               Event::dispatch('catalog.product.update.before',  $virtualProductData->id);
+              $configVirtualProduct = $this->productRepository->update($data, $virtualProductData->id);
+              Event::dispatch('catalog.product.update.after',$configVirtualProduct);
 
             if (isset($imageZipName)) {
                 $this->productImageRepository->bulkuploadImages($data, $virtualProductData, $imageZipName);

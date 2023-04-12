@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Product\Models\ProductAttributeValue;
 use Webkul\Core\Eloquent\Repository;
+use Illuminate\Support\Facades\Event;
 use Webkul\Bulkupload\Repositories\ImportProductRepository;
 use Webkul\Product\Repositories\ProductFlatRepository;
 use Webkul\Product\Repositories\ProductRepository;
@@ -213,7 +214,9 @@ class ConfigurableProductRepository extends Repository
                                         $data['attribute_family_id'] = $attributeFamilyData->id;
                                         $data['sku'] = $csvData[$i]['sku'];
 
-                                        $product = $this->bulkProductRepository->create($data);
+                                        Event::dispatch('catalog.product.create.before');
+                                        $configSimpleproduct = $this->productRepository->create($data);
+                                        Event::dispatch('catalog.product.create.after', $configSimpleproduct);
                                     } else {
                                         $product = $productData;
                                     }
