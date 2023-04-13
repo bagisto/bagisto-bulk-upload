@@ -1,3 +1,15 @@
+@php
+
+    $tree = \Webkul\Core\Tree::create();
+    foreach (config('core') as $item) {
+        $tree->add($item);
+    }
+    $tree->items = core()->sortItems($tree->items);
+    $config = $tree;
+    $allLocales = core()->getAllLocales()->pluck('name', 'code');
+    
+@endphp
+
 <div class="navbar-left" v-bind:class="{'open': isMenuOpen}">
     <ul class="menubar">
         @foreach ($menu->items as $menuItem)
@@ -47,3 +59,23 @@
 
     <nav-slide-button id="nav-expand-button" icon-class="accordian-right-icon"></nav-slide-button>
 </div>
+
+@push('scripts')
+
+    <script>
+
+        $(document).ready(function () {
+            $(".menubar-anchor").click(function() {
+                if ( $(this).parent().attr('class') == 'menu-item active' ) {
+                    $(this).parent().removeClass('active');
+                    $('.arrow-icon-left').removeClass('rotate-arrow-icon');
+                    $('.arrow-icon-right').removeClass('rotate-arrow-icon');
+                    $(".sub-menubar").hide();
+                    event.preventDefault();
+                }
+            });
+        });
+
+    </script>
+
+@endpush
