@@ -25,6 +25,8 @@ class AlterBulkuploadDataFlowProfilesTable extends Migration
      */
     public function down()
     {
-        //
+        Schema::table('bulkupload_data_flow_profiles', function(Blueprint $table) {
+            $table->dropColumn('locale_code');
+        });
     }
 }

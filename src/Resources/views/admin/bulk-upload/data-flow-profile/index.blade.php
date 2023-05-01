@@ -23,7 +23,7 @@
             </div>
 
             <div class="control-group {{ $errors->first('attribute_family') ? 'has-error' :'' }}">
-                <label for="attribute_family" class="required">{{ __('admin::app.catalog.products.familiy') }}</label>
+                <label for="attribute_family" class="required">{{ __('admin::app.catalog.products.family') }}</label>
 
                 <select class="control" id="attribute_family" name="attribute_family" {{ $familyId ? 'disabled' : '' }}>
                     <option value="">
@@ -66,7 +66,7 @@
     <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.grid') }}'" :active="true" class="mt-45">
         <div slot="body">
             <div class="page-content">
-                {!! app('Webkul\Bulkupload\DataGrids\Admin\ProfileDataGrid')->render() !!}
+                <datagrid-plus src="{{ route('admin.dataflow-profile.index') }}"></datagrid-plus>
             </div>
         </div>
     </accordian>

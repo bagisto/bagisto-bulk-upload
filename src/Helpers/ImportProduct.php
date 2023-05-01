@@ -2,27 +2,10 @@
 
 namespace Webkul\Bulkupload\Helpers;
 
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Bulkupload\Repositories\DataFlowProfileRepository;
+use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
 
 class ImportProduct
 {
-    /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     *
-     */
-    protected $importProductRepository;
-
-    /**
-     * DataFlowProfileRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\DataFlowProfileRepository
-     *
-     */
-    protected $dataFlowProfileRepository;
-
      /**
      * Create a new controller instance.
      *
@@ -32,14 +15,9 @@ class ImportProduct
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        DataFlowProfileRepository $dataFlowProfileRepository
-    )
-    {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->dataFlowProfileRepository = $dataFlowProfileRepository;
-    }
+        protected ImportProductRepository $importProductRepository,
+        protected DataFlowProfileRepository $dataFlowProfileRepository
+    ){}
 
     /**
      * store import products for profile execution

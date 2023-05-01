@@ -3,47 +3,18 @@
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Bulkupload\Repositories\DataFlowProfileRepository;
+use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
+use Webkul\Bulkupload\Requests\AddProfileRequest;
+use Webkul\Bulkupload\DataGrids\Admin\ProfileDataGrid;
 
 class BulkUploadController extends Controller
 {
-    /**
-     * DataFlowProfileRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\DataFlowProfileRepository
-     *
-     */
-     protected $dataFlowProfileRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     *
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     *
-     */
-    protected $importProductRepository;
-
-    /**
-     * @var array
-     */
-    protected $product = [];
-
      /**
-     * Contains route related configuration
+     * Contains routes and views related configuration
      *
      * @var array
      */
     protected $_config;
-
 
     /**
      * Create a new controller instance.
@@ -55,18 +26,11 @@ class BulkUploadController extends Controller
      * @return void
      */
     public function __construct(
-        AttributeFamilyRepository $attributeFamilyRepository,
-        DataFlowProfileRepository $dataFlowProfileRepository,
-        ImportProductRepository $importProductRepository
-    )
-    {
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected DataFlowProfileRepository $dataFlowProfileRepository,
+        protected ImportProductRepository $importProductRepository
+    ) {
         $this->_config = request('_config');
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->importProductRepository = $importProductRepository;
-
-        $this->dataFlowProfileRepository = $dataFlowProfileRepository;
     }
 
     /**
@@ -76,20 +40,22 @@ class BulkUploadController extends Controller
      */
     public function index()
     {
-        $profiles = null;
+        if (request()->ajax()) {
+            return app(ProfileDataGrid::class)->toJson();
+        }
+
+        $profiles = [];
         $families = $this->attributeFamilyRepository->all();
-        $allProfiles = $this->importProductRepository->get()->toArray();
+        $allProfiles = $this->importProductRepository->all();
 
         if (! empty($allProfiles)) {
-            foreach ($allProfiles as $allProfile) {
-                $profilers[] = $allProfile['data_flow_profile_id'];
-            }
-
+            $profilers = $allProfiles->pluck('data_flow_profile_id');
+ 
             foreach ($profilers as $key => $profiler) {
                 $profiles[] = $this->dataFlowProfileRepository->findByfield(['id' => $profilers[$key], 'run_status' => '0']);
             }
         }
-
+        
         return view($this->_config['view'], compact('families', 'profiles'));
     }
 
@@ -98,20 +64,9 @@ class BulkUploadController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store()
+    public function store(AddProfileRequest $addProfileRequest)
     {
-        request()->validate([
-            'name' => 'required|unique:bulkupload_data_flow_profiles',
-            'attribute_family' => 'required',
-            'locale_code' => 'required'
-        ]);
-
-        $dataFlowProfileAdmin['name'] = request()->name;
-        $dataFlowProfileAdmin['attribute_family_id'] = request()->attribute_family;
-        $dataFlowProfileAdmin['locale_code'] = request()->locale_code;
-
-
-        $this->dataFlowProfileRepository->create($dataFlowProfileAdmin);
+        $this->dataFlowProfileRepository->create($addProfileRequest->validated());
 
         session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-saved'));
 

@@ -55,7 +55,8 @@ return [
                 'upload-sample-files' => 'Upload Sample Files',
                 'file' => 'CSV/XLS/XLSX file',
                 'image' => 'Image Zip file',
-                'save' => 'Save'
+                'save' => 'Save',
+                'select-sample-file' => 'Please select a sample file name',
             ],
 
             'messages' => [

@@ -2,20 +2,23 @@
 
 namespace Webkul\Bulkupload\DataGrids\Admin;
 
-use DB;
+use Illuminate\Support\Facades\DB;
 use Webkul\Ui\DataGrid\DataGrid;
 
-/**
- * Profile Datagrid class
- *
- */
 class ProfileDataGrid extends DataGrid
 {
     /**
-     * @var integer
+     * Index 
+     * 
+     * @var string
      */
     protected $index = 'id';
 
+    /**
+     * Prepare the query builder
+     *
+     * @return void
+     */
     public function prepareQueryBuilder()
     {
         $queryBuilder = DB::table('bulkupload_data_flow_profiles')
@@ -30,11 +33,16 @@ class ProfileDataGrid extends DataGrid
         $this->setQueryBuilder($queryBuilder);
     }
 
+    /**
+     * Add Column
+     *
+     * @return void
+     */
     public function addColumns()
     {
         $this->addColumn([
             'index'      => 'profile_name',
-            'label'      => trans('bulkupload::app.admin.bulk-upload.data-flow-profile.name'),
+            'label'      => __('bulkupload::app.admin.bulk-upload.data-flow-profile.name'),
             'type'       => 'string',
             'searchable' => true,
             'sortable'   => true,
@@ -43,7 +51,7 @@ class ProfileDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'name',
-            'label'      => trans('admin::app.catalog.products.familiy'),
+            'label'      => __('admin::app.catalog.products.family'),
             'type'       => 'string',
             'searchable' => true,
             'sortable'   => true,
@@ -52,7 +60,7 @@ class ProfileDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'locale_code',
-            'label'      => trans('bulkupload::app.admin.bulk-upload.data-flow-profile.data-grid.locale_code'),
+            'label'      => __('bulkupload::app.admin.bulk-upload.data-flow-profile.data-grid.locale_code'),
             'type'       => 'string',
             'searchable' => true,
             'sortable'   => true,
@@ -61,7 +69,7 @@ class ProfileDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'created_at',
-            'label'      => trans('bulkupload::app.admin.bulk-upload.data-flow-profile.data-grid.created-at'),
+            'label'      => __('bulkupload::app.admin.bulk-upload.data-flow-profile.data-grid.created-at'),
             'type'       => 'datetime',
             'sortable'   => true,
             'searchable' => false,
@@ -69,6 +77,11 @@ class ProfileDataGrid extends DataGrid
         ]);
     }
 
+    /**
+     * Prepare actions
+     *
+     * @return void
+     */
     public function prepareActions()
     {
         $this->addAction([
@@ -81,10 +94,10 @@ class ProfileDataGrid extends DataGrid
         ]);
 
         $this->addAction([
-            'type'          => trans('admin::app.datagrid.delete'),
+            'type'          => __('admin::app.datagrid.delete'),
             'method'        => 'POST',
             'route'         => 'bulkupload.admin.profile.delete',
-            'confirm_text'  => trans('ui::app.datagrid.massaction.delete'),
+            'confirm_text'  => __('ui::app.datagrid.massaction.delete'),
             'icon'          => 'icon trash-icon',
             'title'         => ''
         ]);
@@ -92,6 +105,11 @@ class ProfileDataGrid extends DataGrid
         $this->enableAction = true;
     }
 
+    /**
+     * Prepare mass actions
+     *
+     * @return void
+     */
     public function prepareMassActions()
     {
         $this->addMassAction([

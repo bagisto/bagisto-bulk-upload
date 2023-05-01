@@ -53,8 +53,7 @@
 
                         <div class="page-content">
                             <div class="is_downloadable">
-                                <downloadable-input>
-                                </downloadable-input>
+                                <downloadable-input></downloadable-input>
                             </div>
 
                             <div class="attribute-family">
@@ -143,7 +142,7 @@
     <script type="text/x-template" id="attribute-family-template">
         <div>
             <div class="control-group {{ $errors->first('attribute_family') ? 'has-error' :'' }}">
-                <label for="attribute_family" class="required">{{ __('admin::app.catalog.products.familiy') }}</label>
+                <label for="attribute_family" class="required">{{ __('admin::app.catalog.products.family') }}</label>
 
                 <select @change="onChange()" v-model="key" class="control" id="attribute_family" name="attribute_family" {{ $familyId ? 'disabled' : '' }}>
                     <option value="">
@@ -172,7 +171,7 @@
                     <option v-for="dataflowprofile,index in dataFlowProfiles" :value="dataflowprofile.id">@{{ dataflowprofile.name }}</option>
                 </select>
 
-            <span class="control-error">{{ $errors->first('data_flow_profile') }}</span>
+                <span class="control-error">{{ $errors->first('data_flow_profile') }}</span>
 
             </div>
         </div>
@@ -180,71 +179,59 @@
 
     <script>
         Vue.component('attributefamily', {
-                template: '#attribute-family-template',
-                data: function() {
-                    return {
-                        key: "",
-                        // seller: "",
-                        dataFlowProfiles: [],
-                    }
-                },
-
-                mounted: function() {
-                },
-
-                methods:{
-                    onChange: function() {
-                        this_this = this;
-
-                        var uri = "{{ route('bulk-upload-admin.get-all-profile') }}"
-
-                        this_this.$http.post(uri, {
-                            attribute_family_id: this_this.key,
-                            // seller_id: this_this.seller,
-                        })
-                        .then(response => {
-                            this_this.dataFlowProfiles = response.data.dataFlowProfiles;
-                        })
-
-                        .catch(function(error) {
-                        });
-                    }
+            template: '#attribute-family-template',
+            data: function() {
+                return {
+                    key: "",
+                    dataFlowProfiles: [],
                 }
+            },
+
+            methods:{
+                onChange: function() {
+                    var uri = "{{ route('bulk-upload-admin.get-all-profile') }}"
+
+                    this.$http.post(uri, {
+                        attribute_family_id: this.key,
+                    }).then(response => {
+                        this.dataFlowProfiles = response.data.dataFlowProfiles;
+                    });
+                }
+            }
         })
 
         Vue.component('downloadable-input', {
-                template: '#downloadable-input-template',
-                data: function() {
-                    return {
-                        key: "",
-                        // seller: "",
-                        dataFlowProfiles: [],
-                        isLinkSample: false,
-                        isSample: false,
-                        linkFiles: false,
-                        linkSampleFiles: false,
-                        sampleFile: false,
-                    }
+            template: '#downloadable-input-template',
+            data: function() {
+                return {
+                    key: "",
+                    dataFlowProfiles: [],
+                    isLinkSample: false,
+                    isSample: false,
+                    linkFiles: false,
+                    linkSampleFiles: false,
+                    sampleFile: false,
+                }
+            },
+
+            methods:{
+                showOptions: function() {
+                    this.isLinkSample = ! this.isLinkSample;
+                    this.isSample = ! this.isSample;
+                    this.linkFiles = ! this.linkFiles;
+
+                    this.linkSampleFiles = false;
+                    this.sampleFile = false;
                 },
 
-                methods:{
-                    showOptions: function() {
-                        this.isLinkSample = !this.isLinkSample;
-                        this.isSample = !this.isSample;
-                        this.linkFiles = !this.linkFiles;
+                showlinkSamples: function() {
+                    this.linkSampleFiles = ! this.linkSampleFiles;
+                },
 
-                        this.linkSampleFiles = false;
-                        this.sampleFile = false;
-                    },
-
-                    showlinkSamples: function() {
-                        this.linkSampleFiles = !this.linkSampleFiles;
-                    },
-
-                    showSamples: function() {
-                        this.sampleFile = !this.sampleFile;
-                    }
+                showSamples: function() {
+                    this.sampleFile = ! this.sampleFile;
                 }
+            }
         })
     </script>
 @endpush
