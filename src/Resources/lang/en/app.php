@@ -12,7 +12,7 @@ return [
         'bulk-upload' => [
             'index' => 'Bulkupload',
             'manage-bulk-upload' => 'Manage Bulk Upload',
-
+            'bulk-upload-dataflow-profile' => 'Bulk Upload Dataflow Profile',
             'data-flow-profile' => [
                 'index' => 'Data Flow Profile',
                 'add-profile' => 'Add Profile',

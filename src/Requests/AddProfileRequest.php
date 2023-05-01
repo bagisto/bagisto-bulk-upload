@@ -28,7 +28,12 @@ class AddProfileRequest extends FormRequest
         ];
     }
 
-    public function prepareForValidation()
+    /**
+     * Prepare for validation
+     *
+     * @return void
+     */
+    public function prepareForValidation(): void
     {
         $this->merge([
             'attribute_family_id' => $this->input('attribute_family'),

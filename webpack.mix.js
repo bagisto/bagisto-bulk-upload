@@ -1,4 +1,9 @@
-const { mix } = require("laravel-mix");
+const mix = require("laravel-mix");
+
+if (mix == 'undefined') {
+    const { mix } = require("laravel-mix");
+}
+
 require("laravel-mix-merge-manifest");
 
 if (mix.inProduction()) {
@@ -10,18 +15,16 @@ if (mix.inProduction()) {
 mix.setPublicPath(publicPath).mergeManifest();
 mix.disableNotifications();
 
-mix
-  .copyDirectory(
-    __dirname + "/src/Resources/assets/images",
-    publicPath + "/images"
-  )
-  .sass(
-    __dirname + "/src/Resources/assets/sass/admin.scss",
-    "css/bulk-admin.css"
-  )
+mix.js(__dirname + "/src/Resources/assets/js/app.js", "js/bulk-admin.js")
+  .sass(__dirname + "/src/Resources/assets/sass/admin.scss", "css/bulk-admin.css")
+  .copy(__dirname + '/src/Resources/assets/images', publicPath + '/images')
   .options({
-    processCssUrls: false,
+    processCssUrls: false
   });
+
+if (! mix.inProduction()) {
+  mix.sourceMaps();
+}
 
 if (mix.inProduction()) {
   mix.version();

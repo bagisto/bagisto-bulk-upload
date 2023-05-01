@@ -95,10 +95,8 @@ class BulkUploadController extends Controller
      */
     public function update($id)
     {
-        $product = $this->dataFlowProfileRepository->update(request()->except('_token'), $id);
-        $families = $this->attributeFamilyRepository->all();
-        $profiles = $this->dataFlowProfileRepository->findOrFail($id);
-
+        $this->dataFlowProfileRepository->update(request()->except('_token'), $id);
+        
         session()->flash('success', trans('admin::app.response.update-success', ['name' => 'Product']));
 
         return redirect()->route('admin.dataflow-profile.index');
@@ -108,11 +106,12 @@ class BulkUploadController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * 
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        $product = $this->dataFlowProfileRepository->findOrFail($id)->delete();
+        $this->dataFlowProfileRepository->findOrFail($id)->delete();
 
         session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-deleted'));
 

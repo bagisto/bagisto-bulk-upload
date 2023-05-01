@@ -23,8 +23,7 @@ class ProfileDataGrid extends DataGrid
     {
         $queryBuilder = DB::table('bulkupload_data_flow_profiles')
             ->leftJoin('attribute_families', 'bulkupload_data_flow_profiles.attribute_family_id', '=', 'attribute_families.id')
-            ->select('bulkupload_data_flow_profiles.id',
-            'bulkupload_data_flow_profiles.name as profile_name', 'attribute_families.name', 'bulkupload_data_flow_profiles.locale_code', 'bulkupload_data_flow_profiles.created_at');
+            ->select('bulkupload_data_flow_profiles.id', 'bulkupload_data_flow_profiles.name as profile_name', 'attribute_families.name', 'bulkupload_data_flow_profiles.locale_code', 'bulkupload_data_flow_profiles.created_at');
 
         $this->addFilter('created_at', 'bulkupload_data_flow_profiles.created_at');
         $this->addFilter('profile_name', 'bulkupload_data_flow_profiles.name');
@@ -85,24 +84,18 @@ class ProfileDataGrid extends DataGrid
     public function prepareActions()
     {
         $this->addAction([
-            'type'   => 'Edit',
+            'title'  => trans('admin::app.datagrid.edit'),
             'method' => 'GET',
             'route'  => 'bulkupload.admin.profile.edit',
             'icon'   => 'icon pencil-lg-icon',
-            'title'  => ''
-
         ]);
 
         $this->addAction([
-            'type'          => __('admin::app.datagrid.delete'),
-            'method'        => 'POST',
-            'route'         => 'bulkupload.admin.profile.delete',
-            'confirm_text'  => __('ui::app.datagrid.massaction.delete'),
-            'icon'          => 'icon trash-icon',
-            'title'         => ''
+            'title'  => trans('admin::app.datagrid.delete'),
+            'method' => 'POST',
+            'route'  => 'bulkupload.admin.profile.delete',
+            'icon'  => 'icon trash-icon',
         ]);
-
-        $this->enableAction = true;
     }
 
     /**
