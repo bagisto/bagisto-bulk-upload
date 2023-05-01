@@ -7,6 +7,7 @@ use Illuminate\Container\Container as App;
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Core\Eloquent\Repository;
+use Illuminate\Support\Facades\Event;
 use Webkul\Bulkupload\Repositories\ImportProductRepository;
 use Webkul\Product\Repositories\ProductFlatRepository;
 use Webkul\Product\Repositories\ProductRepository;
@@ -268,7 +269,9 @@ class GroupedProductRepository extends Repository
             $data['attribute_family_id'] = $attributeFamilyData->id;
             $data['sku'] = $csvData['sku'];
 
+            Event::dispatch('catalog.product.create.before');
             $groupedProduct = $this->productRepository->create($data);
+            Event::dispatch('catalog.product.create.after', $groupedProduct);
         } else {
             $groupedProduct = $productData;
         }
@@ -429,7 +432,9 @@ class GroupedProductRepository extends Repository
             return $dataToBeReturn;
         }
 
-        $this->productRepository->update($data, $groupedProduct->id);
+        Event::dispatch('catalog.product.update.before',  $groupedProduct->id);
+        $configGroupedProduct =  $this->productRepository->update($data, $groupedProduct->id);
+        Event::dispatch('catalog.product.update.after',$configGroupedProduct);
 
         if (isset($imageZipName)) {
             $this->productImageRepository->bulkuploadImages($data, $groupedProduct, $imageZipName);

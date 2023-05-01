@@ -24,7 +24,7 @@ class BulkUploadServiceProvider extends ServiceProvider
         ], 'public');
 
         $this->publishes([
-            __DIR__ . '/../Resources/views/admin/bulk-upload/layouts/nav-aside.blade.php' => resource_path('views/vendor/admin/layouts/nav-aside.blade.php'),
+            __DIR__ . '/../Resources/views/admin/bulk-upload/layouts/nav-aside.blade.php' => resource_path('views/vendor/admin/layouts/nav-left.blade.php'),
         ]);
 
         view()->composer(['bulkupload::admin.bulk-upload.upload-files.index'], function ($view) {
