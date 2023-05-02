@@ -17,8 +17,7 @@ Route::group(['middleware' => ['web']], function () {
                     'view' => 'bulkupload::admin.bulk-upload.run-profile.index'
                 ])->name('admin.run-profile.index');
 
-                Route::post('/read-csv', [Webkul\Bulkupload\Http\Controllers\Admin\HelperController::class, 'readCSVData'])
-                ->name('bulk-upload-admin.read-csv');
+                Route::post('/read-csv', [Webkul\Bulkupload\Http\Controllers\Admin\HelperController::class, 'readCSVData'])->name('bulk-upload-admin.read-csv');
 
                 Route::post('/getprofiles', [Webkul\Bulkupload\Http\Controllers\Admin\HelperController::class, 'getAllDataFlowProfiles'])
                 ->name('bulk-upload-admin.get-all-profile');

@@ -2,8 +2,10 @@
 
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
+use Illuminate\Support\Facades\Storage;
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Bulkupload\Helpers\ImportProduct;
+use Webkul\Bulkupload\Requests\ImportProductRequest;
 use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
 use Webkul\Bulkupload\Repositories\Products\{SimpleProductRepository, ConfigurableProductRepository, VirtualProductRepository};
 use Webkul\Bulkupload\Repositories\Products\{DownloadableProductRepository, GroupedProductRepository, BundledProductRepository, BookingProductRepository};
@@ -80,9 +82,7 @@ class HelperController extends Controller
      */
     public function getAllDataFlowProfiles()
     {
-        $attribute_family_id = request()->attribute_family_id;
-
-        $dataFlowProfiles = $this->dataFlowProfileRepository->findByField('attribute_family_id', request()->attribute_family_id);
+        $dataFlowProfiles = $this->dataFlowProfileRepository->findByField('attribute_family_id', request()->input('attribute_family_id'));
 
         return ['dataFlowProfiles' => $dataFlowProfiles];
     }
@@ -90,15 +90,15 @@ class HelperController extends Controller
     /**
      * Read count of records in CSV/XLSX
      *
-     * @return \Illuminate\Http\Response
+     * @return integer|void
      */
     public function readCSVData()
     {
         $countCSV = 0;
 
-        $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', request()->data_flow_profile_id);
+        $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', request()->input('data_flow_profile_id'));
 
-        $this->dataFlowProfileRepository->update(['run_status' => '1'], request()->data_flow_profile_id);
+        $this->dataFlowProfileRepository->update(['run_status' => '0'], request()->input('data_flow_profile_id'));
 
         if ($dataFlowProfileRecord) {
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
@@ -116,40 +116,26 @@ class HelperController extends Controller
     }
 
     /**
-     * store import products for profile execution
+     * Store import products for profile execution
      *
      * @return \Illuminate\Http\Response
      */
-    public function importNewProductsStore()
+    public function importNewProductsStore(ImportProductRequest $importProductRequest)
     {
-        $dataFlowProfileId = request()->data_flow_profile;
-
-        if ($dataFlowProfileId) {
-            $importedProducts = $this->importProduct->store();
-
-            return $importedProducts;
-        } else {
-            session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.data-profile-not-selected'));
-
-            return back();
-        }
+        return $this->importProduct->store();
     }
 
     /**
-     * profile execution to upload products
+     * Profile execution to upload products
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse|void
      */
     public function runProfile()
     {
-        $data_flow_profile_id = request()->data_flow_profile_id;
-        $numberOfCSVRecord = request()->numberOfCSVRecord;
-        $countOfStartedProfiles = request()->countOfStartedProfiles;
         $product = [];
         $imageZipName = null;
 
-        $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-        ('data_flow_profile_id', $data_flow_profile_id);
+        $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', request()->input('data_flow_profile_id'));
 
         if ($dataFlowProfileRecord) {
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
@@ -158,16 +144,15 @@ class HelperController extends Controller
                 $imageZipName = $this->storeImageZip($dataFlowProfileRecord);
             }
 
-            if ($numberOfCSVRecord >= 0) {
-                for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
+            if ((int) request()->input('numberOfCSVRecord') >= 0) {
+                for ($i = (int) request()->input('countOfStartedProfiles'); $i < count($csvData); $i++) {
                     $product['loopCount'] = $i;
 
-                    switch($csvData[$i]['type']) {
+                    switch ($csvData[$i]['type']) {
                         case "simple":
                             $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $product);
 
                             return response()->json($simpleProduct);
-
                         case "virtual":
                             $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
 

@@ -9,13 +9,6 @@ use Webkul\Bulkupload\DataGrids\Admin\ProfileDataGrid;
 
 class BulkUploadController extends Controller
 {
-     /**
-     * Contains routes and views related configuration
-     *
-     * @var array
-     */
-    protected $_config;
-
     /**
      * Create a new controller instance.
      *
@@ -28,9 +21,10 @@ class BulkUploadController extends Controller
     public function __construct(
         protected AttributeFamilyRepository $attributeFamilyRepository,
         protected DataFlowProfileRepository $dataFlowProfileRepository,
-        protected ImportProductRepository $importProductRepository
+        protected ImportProductRepository $importProductRepository,
+        protected $_config = null
     ) {
-        $this->_config = request('_config');
+        $this->_config = $_config ?? request('_config');
     }
 
     /**
@@ -93,12 +87,12 @@ class BulkUploadController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update($id)
+    public function update(AddProfileRequest $addProfileRequest, $id)
     {
-        $this->dataFlowProfileRepository->update(request()->except('_token'), $id);
+        $this->dataFlowProfileRepository->update($addProfileRequest->validated(), $id);
         
-        session()->flash('success', trans('admin::app.response.update-success', ['name' => 'Product']));
-
+        session()->flash('success', __('bulkupload::app.admin.bulk-upload.messages.update-profile'));
+        
         return redirect()->route('admin.dataflow-profile.index');
     }
 
@@ -113,9 +107,7 @@ class BulkUploadController extends Controller
     {
         $this->dataFlowProfileRepository->findOrFail($id)->delete();
 
-        session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-deleted'));
-
-        return response()->json(['message' => true], 200);
+        return response()->json(['message' => __('bulkupload::app.admin.bulk-upload.messages.profile-deleted')], 200);
     }
 
     /**

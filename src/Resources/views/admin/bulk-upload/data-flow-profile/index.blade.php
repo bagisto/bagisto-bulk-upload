@@ -30,24 +30,24 @@
                 <span class="control-error" v-if="errors.has('name')" v-text="errors.first('name')"></span>
             </div>
 
-            <div class="control-group" :class="[errors.has('attribute_family') ? 'has-error' : '']">
-                <label for="attribute_family" class="required">{{ __('admin::app.catalog.products.family') }}</label>
+            <div class="control-group" :class="[errors.has('attribute_family_id') ? 'has-error' : '']">
+                <label for="attribute_family_id" class="required">{{ __('admin::app.catalog.products.family') }}</label>
 
-                <select class="control" v-validate="'required'" id="attribute_family" name="attribute_family" {{ $familyId ? 'disabled' : '' }} id="attribute_family" data-vv-as="&quot;{{ __('admin::app.catalog.products.family') }}&quot;">
+                <select class="control" v-validate="'required'" id="attribute_family_id" name="attribute_family_id" {{ $familyId ? 'disabled' : '' }} id="attribute_family_id" data-vv-as="&quot;{{ __('admin::app.catalog.products.family') }}&quot;">
                     <option value="">
                         {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
                     </option>
 
                     @foreach ($families as $family)
-                        <option value="{{ $family->id }}" {{ ($familyId == $family->id || old('attribute_family') == $family->id) ? 'selected' : '' }}>{{ $family->name }}</option>
+                        <option value="{{ $family->id }}" {{ ($familyId == $family->id || old('attribute_family_id') == $family->id) ? 'selected' : '' }}>{{ $family->name }}</option>
                     @endforeach
                 </select>
 
                 @if ($familyId)
-                    <input type="hidden" name="attribute_family" value="{{ $familyId }}"/>
+                    <input type="hidden" name="attribute_family_id" value="{{ $familyId }}"/>
                 @endif
 
-                <span class="control-error" v-if="errors.has('name')" v-text="errors.first('attribute_family')"></span>
+                <span class="control-error" v-if="errors.has('attribute_family_id')" v-text="errors.first('attribute_family_id')"></span>
             </div>
 
             <div class="control-group" :class="[errors.has('locale_code') ? 'has-error' : '']">

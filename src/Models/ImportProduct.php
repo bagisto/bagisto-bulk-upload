@@ -7,7 +7,10 @@ use Webkul\Bulkupload\Contracts\ImportProduct as ImportProductContract;
 
 class ImportProduct extends Model implements ImportProductContract
 {
-    protected $table = "import_products";
-
+    /**
+     * Define guarded property
+     *
+     * @var array
+     */
     protected $guarded = [];
 }

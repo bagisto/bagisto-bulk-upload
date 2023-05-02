@@ -20,7 +20,7 @@
                 <div class="heading">
                     <h1>{{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.edit-profile') }}</h1>
                 </div>
-
+                
                 <form method="POST" action="{{ route('admin.bulk-upload.dataflow.update-profile',$profiles->id) }}" @submit.prevent="onSubmit">
                     @csrf
                     <?php $familyId = app('request')->input('family') ?>
@@ -51,7 +51,7 @@
         
                         <select v-validate="'required'" class="control" id="locale_code" name="locale_code" data-vv-as="&quot;{{ __('admin::app.settings.channels.default-locale') }}&quot;">
                             @foreach (core()->getAllLocales() as $localeModel)
-                                <option value="{{ $localeModel->code }}">
+                                <option value="{{ $localeModel->code }}" {{ $profiles->locale_code == $localeModel->code ? 'selected' : '' }}>
                                     {{ $localeModel->name }}
                                 </option>
                             @endforeach
@@ -69,7 +69,7 @@
             </div>
 
             <div class="page-content">
-                {!! app('Webkul\Bulkupload\DataGrids\Admin\ProfileDataGrid')->render() !!}
+                <datagrid-plus src="{{ route('admin.dataflow-profile.index') }}"></datagrid-plus>
             </div>
         </div>
     </div>

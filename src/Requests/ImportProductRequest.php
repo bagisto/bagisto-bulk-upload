@@ -4,7 +4,7 @@ namespace Webkul\Bulkupload\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AddProfileRequest extends FormRequest
+class ImportProductRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,17 +21,11 @@ class AddProfileRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
-            'attribute_family_id' => 'required',
-            'locale_code'      => 'required'
+        return [
+            'attribute_family'  => 'required',
+            'file_path'         => 'required',
+            'image_path'        => 'mimetypes:application/zip|max:10000',
+            'data_flow_profile' => 'required',
         ];
-
-        if (request()->routeIs('admin.bulk-upload.dataflow.update-profile')){
-            $rules['name'] = 'required|unique:bulkupload_data_flow_profiles,name,' . $this->id;
-        } else {
-            $rules['name'] = 'required|unique:bulkupload_data_flow_profiles';
-        }
-
-        return $rules;
     }
 }

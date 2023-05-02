@@ -2,7 +2,6 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Illuminate\Container\Container as App;
 use Webkul\Core\Eloquent\Repository;
 use Illuminate\Support\Facades\Validator;
 use Webkul\Product\Models\ProductAttributeValue;
@@ -14,32 +13,11 @@ use Webkul\Product\Repositories\ProductAttributeValueRepository;
 class HelperRepository extends Repository
 {
     /**
-     * DataFlowProfileRepository object
+     * Contains product id
      *
-     * @var \Webkul\Bulkupload\Repositories\DataFlowProfileRepository
+     * @var mixed
      */
-    protected $dataFlowProfileRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * ProductAttributeValueRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductAttributeValueRepository
-     */
-    protected $productAttributeValueRepository;
+    protected $id;
 
     /**
      * Create a new repository instance.
@@ -51,20 +29,11 @@ class HelperRepository extends Repository
      * @return void
      */
     public function __construct(
-        DataFlowProfileRepository $dataFlowProfileRepository,
-        ProductAttributeValueRepository $productAttributeValueRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository
-    )
-    {
-        $this->dataFlowProfileRepository = $dataFlowProfileRepository;
-
-        $this->productAttributeValueRepository = $productAttributeValueRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-    }
+        protected DataFlowProfileRepository $dataFlowProfileRepository,
+        protected ProductAttributeValueRepository $productAttributeValueRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductRepository $productRepository
+    ) {}
 
     /**
      * Specify Model class name
@@ -79,18 +48,15 @@ class HelperRepository extends Repository
     /**
      * validation Rules for creating product
      *
-     * @param integer $dataFlowProfileId
-     * @param array $records
+     * @param  integer  $dataFlowProfileId
+     * @param  array  $records
      * @param  \Webkul\Bulkupload\Contracts\ImportProduct  $dataFlowProfileRecord
      * @param  \Webkul\Product\Contracts\Product  $product
-     * @return array
+     * @return array|void
      */
     public function validateCSV($dataFlowProfileId, $records, $dataFlowProfileRecord, $product)
     {
-        $messages = [];
-        $rules = [];
-
-        $profiler = $this->dataFlowProfileRepository->findOneByField('id', $dataFlowProfileId);
+        $this->dataFlowProfileRepository->findOneByField('id', $dataFlowProfileId);
 
         if ($dataFlowProfileRecord) {
             foreach($records as $data) {
@@ -211,7 +177,6 @@ class HelperRepository extends Repository
             }
 
             return null;
-        } catch(\EXception $e) {
-        }
+        } catch(\EXception $e) {}
     }
 }

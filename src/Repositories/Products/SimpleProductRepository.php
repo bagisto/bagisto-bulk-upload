@@ -2,132 +2,43 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Storage;
-use Illuminate\Container\Container as App;
+use Illuminate\Support\Facades\{Validator,Event, Log, Storage};
 use Webkul\Admin\Imports\DataGridImport;
-use Illuminate\Support\Facades\Validator;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Category\Repositories\CategoryRepository;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
 use Webkul\Inventory\Repositories\InventorySourceRepository;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\Products\HelperRepository;
-use Webkul\Attribute\Repositories\AttributeOptionRepository;
-use Webkul\Bulkupload\Repositories\ProductImageRepository;
-use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
+use Webkul\Product\Repositories\{ProductFlatRepository, ProductRepository};
+use Webkul\Attribute\Repositories\{AttributeFamilyRepository, AttributeOptionRepository};
+use Webkul\Bulkupload\Repositories\{Products\HelperRepository, ImportProductRepository, ProductImageRepository};
 
 class SimpleProductRepository extends Repository
 {
     /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     */
-    protected $importProductRepository;
-
-    /**
-     * CategoryRepository object
-     *
-     * @var \Webkul\Category\Repositories\CategoryRepository
-     */
-    protected $categoryRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * HelperRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\HelperRepository
-     */
-    protected $helperRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
-    /**
-     * AttributeOptionRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeOptionRepository
-     */
-    protected $attributeOptionRepository;
-
-    /**
-     * InventorySourceRepository object
-     *
-     * @var \Webkul\Inventory\Repositories\InventorySourceRepository
-     */
-    protected $inventorySourceRepository;
-
-    /**
      * Create a new repository instance.
      *
-     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
-     * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
      * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
+     * @param  \Webkul\Inventory\Repositories\InventorySourceRepository  $inventorySourceRepository
      * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
      * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
      * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
+     * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
      * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
+     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
      * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
-     * @param  \Webkul\Inventory\Repositories\InventorySourceRepository  $inventorySourceRepository
      *
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        AttributeOptionRepository $attributeOptionRepository,
-        CategoryRepository $categoryRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository,
-        AttributeFamilyRepository $attributeFamilyRepository,
-        HelperRepository $helperRepository,
-        ProductImageRepository $productImageRepository,
-        InventorySourceRepository $inventorySourceRepository
-    )
-    {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->categoryRepository = $categoryRepository;
-
-        $this->attributeOptionRepository = $attributeOptionRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productImageRepository = $productImageRepository;
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->helperRepository = $helperRepository;
-
-        $this->inventorySourceRepository = $inventorySourceRepository;
-    }
+        protected CategoryRepository $categoryRepository,
+        protected InventorySourceRepository $inventorySourceRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductRepository $productRepository,
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected AttributeOptionRepository $attributeOptionRepository,
+        protected HelperRepository $helperRepository,
+        protected ImportProductRepository $importProductRepository,
+        protected ProductImageRepository $productImageRepository,
+    ) {}
 
     /*
      * Specify Model class name
@@ -151,10 +62,7 @@ class SimpleProductRepository extends Repository
     public function createProduct($requestData, $imageZipName, $product)
     {
         try {
-            $inventory = [];
-
-            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
+            $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', $requestData['data_flow_profile_id']);
 
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
 
@@ -167,7 +75,6 @@ class SimpleProductRepository extends Repository
             $uptoProcessCSVRecords = (int)$requestData['countOfStartedProfiles'] + 10;
 
             $processRecords = (int)$requestData['countOfStartedProfiles'] + (int)$requestData['numberOfCSVRecord'];
-
 
             if ($requestData['numberOfCSVRecord'] > $processCSVRecords) {
                 for ($i = $requestData['countOfStartedProfiles']; $i < $uptoProcessCSVRecords; $i++) {
@@ -209,7 +116,7 @@ class SimpleProductRepository extends Repository
 
             return $dataToBeReturn;
         } catch (\Exception $e) {
-            Log::error('simple create product log: '. $e->getMessage());
+            Log::error('simple create product log: ' . $e->getMessage());
 
             $categoryError = explode('[' ,$e->getMessage());
             $categorySlugError = explode(']' ,$e->getMessage());
@@ -281,7 +188,11 @@ class SimpleProductRepository extends Repository
                 $data['attribute_family_id'] = $attributeFamilyData->id;
                 $data['sku'] = $csvData['sku'];
 
+                Event::dispatch('catalog.product.create.before');
+
                 $simpleproductData = $this->productRepository->create($data);
+
+                Event::dispatch('catalog.product.create.after', $simpleproductData);
             } else {
                 $simpleproductData = $productData;
             }
@@ -297,7 +208,6 @@ class SimpleProductRepository extends Repository
                 $searchIndex = strtolower($value['code']);
 
                 if (array_key_exists($searchIndex, $csvData)) {
-
                     if (is_null($csvData[$searchIndex])) {
                         continue;
                     }
@@ -386,7 +296,7 @@ class SimpleProductRepository extends Repository
                 foreach ($individualProductimages as $imageArraykey => $imageURL)
                 {
                     if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
-                        $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
+                        $imagePath = storage_path('app/public/imported-products/extracted-images/admin/' . $dataFlowProfileRecord->id);
 
                         if (!file_exists($imagePath)) {
                             mkdir($imagePath, 0777, true);
@@ -438,7 +348,11 @@ class SimpleProductRepository extends Repository
                 return $dataToBeReturn;
             }
 
+            Event::dispatch('catalog.product.update.before',  $simpleproductData->id);
+
             $configSimpleProductAttributeStore = $this->productRepository->update($data, $simpleproductData->id);
+
+            Event::dispatch('catalog.product.update.after', $configSimpleProductAttributeStore);
 
             if (isset($imageZipName)) {
                 $this->productImageRepository->bulkuploadImages($data, $simpleproductData, $imageZipName);
@@ -446,7 +360,7 @@ class SimpleProductRepository extends Repository
                 $this->productImageRepository->bulkuploadImages($data, $simpleproductData, $imageZipName = null);
             }
         } catch(\Exception $e) {
-            \Log::error('simple product store function'. $e->getMessage());
+            Log::error('simple product store function'. $e->getMessage());
         }
     }
 }
