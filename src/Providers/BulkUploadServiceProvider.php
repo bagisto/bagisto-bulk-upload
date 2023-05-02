@@ -3,6 +3,7 @@
 namespace Webkul\Bulkupload\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
 
 class BulkUploadServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,10 @@ class BulkUploadServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../Resources/views/admin/bulk-upload/layouts/nav-aside.blade.php' => resource_path('views/vendor/admin/layouts/nav-left.blade.php'),
         ]);
+        
+        Event::listen('bagisto.admin.layout.head', function($viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('bulkupload::admin.layouts.style');
+        });
 
         view()->composer(['bulkupload::admin.bulk-upload.upload-files.index'], function ($view) {
             $items = [];

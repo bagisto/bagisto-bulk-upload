@@ -14,8 +14,8 @@
                     <form action="{{ route('download-sample-files') }}" method="post">
                         <div class="account-table-content">
                             @csrf
-                            <div class="control-group">
-                                <select class="control" id="download-sample" name="download_sample">
+                            <div class="control-group" :class="[errors.has('download_sample') ? 'has-error' : '']">
+                                <select class="control" v-validate="'required'" id="download-sample" name="download_sample"  data-vv-as="&quot;{{ __('bulkupload::app.admin.bulk-upload.upload-files.download-sample') }}&quot;" >
                                     <option value="">
                                         {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
                                     </option>
@@ -30,6 +30,8 @@
                                         </option>
                                     @endforeach
                                 </select>
+
+                                <span class="control-error" v-if="errors.has('download_sample')" v-text="errors.first('download_sample')"></span>
 
                                 <div class="mt-10">
                                     <button type="submit" class="btn btn-lg btn-primary">
@@ -92,24 +94,24 @@
 @push('scripts')
     <script type="text/x-template" id="downloadable-input-template">
         <div>
-            <div class="control-group">
+            <div class="control-group display-flex">
                 <label for="is_downloadable">
                     {{ __('bulkupload::app.admin.bulk-upload.upload-files.is-downloadable') }}
                 </label>
 
-                <input type="checkbox" @click="showOptions()" id="is_downloadable" name="is_downloadable">
+                <input type="checkbox" class="checkbox" @click="showOptions()" id="is_downloadable" name="is_downloadable">
             </div>
 
-            <div class="control-group" v-if="isLinkSample">
+            <div class="control-group display-flex" v-if="isLinkSample">
                 <label for="is_link_sample">{{ __('bulkupload::app.admin.bulk-upload.upload-files.sample-links') }}</label>
 
-                <input type="checkbox" id="is_link_have_sample" @click="showlinkSamples()" name="is_link_have_sample" value="is_link_have_sample" >
+                <input type="checkbox" class="checkbox" id="is_link_have_sample" @click="showlinkSamples()" name="is_link_have_sample" value="is_link_have_sample" >
             </div>
 
-            <div class="control-group" v-if="isSample">
+            <div class="control-group display-flex" v-if="isSample">
                 <label for="is_sample">{{ __('bulkupload::app.admin.bulk-upload.upload-files.sample-available') }}</label>
 
-                <input type="checkbox" id="is_sample" @click="showSamples()" name="is_sample">
+                <input type="checkbox" class="checkbox" id="is_sample" @click="showSamples()" name="is_sample">
             </div>
 
             <div class="control-group" v-if="linkFiles">

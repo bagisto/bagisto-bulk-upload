@@ -126,36 +126,27 @@
 
             computed: {
                 isDisabled () {
-                    if (this.data_flow_profile == '' || this.data_flow_profile == 'Please Select') {
+                    if (this.data_flow_profile == '' || this.data_flow_profile == 'Please Select')
                         return true;
-                    } else {
-                        return false;
-                    }
+                        
+                    return false;
                 }
             },
 
             methods:{
-                detectProfile: function() {
-                    event.target.disabled = true;
-                },
-
                 runProfiler: function(e) {
                     event.target.disabled = true;
 
-                    this.detectProfile();
-
-                    const uri = "{{ route('bulk-upload-admin.read-csv') }}"
-                    this.$http.post(uri, {
+                    this.$http.post("{{ route('bulk-upload-admin.read-csv') }}", {
                         data_flow_profile_id: this.data_flow_profile
-                    })
-                    .then((result) => {
+                    }).then((result) => {
                         totalRecords = result.data;
 
                         if (typeof(totalRecords) == 'number') {
                             this.product.totalCSVRecords = this.product.remainDataInCSV = totalRecords;
                         }
 
-                        if(totalRecords > this.product.countOfStartedProfiles) {
+                        if (totalRecords > this.product.countOfStartedProfiles) {
                             this.initiateProfiler(totalRecords);
                         } else {
                             window.flashMessages = [{
@@ -165,24 +156,18 @@
 
                             this.$root.addFlashMessages()
                         }
-                    })
-                    .catch(function (error) {
-                    });
+                    }).catch(function (error) {});
                 },
 
                 initiateProfiler: function(totalRecords) {
-
-                    const url = "{{ route('bulk-upload-admin.run-profile') }}"
-
-                    this.$http.post(url, {
+                    this.$http.post("{{ route('bulk-upload-admin.run-profile') }}", {
                         data_flow_profile_id: this.data_flow_profile,
                         numberOfCSVRecord: totalRecords,
                         countOfStartedProfiles: this.product.countOfStartedProfiles,
                         totalNumberOfCSVRecord: this.product.totalCSVRecords,
                         productUploaded: this.product.countOfImportedProduct,
                         errorCount: this.product.countOfError
-                    })
-                    .then((result) => {
+                    }).then((result) => {
                         this.data = result.data;
 
                         if (this.data.error) {
@@ -202,9 +187,7 @@
                         this.product.countOfStartedProfiles = this.data.countOfStartedProfiles;
 
                         this.calculateProgress(result.data);
-                    })
-                    .catch(function(error) {
-                    });
+                    }).catch(function(error) {});
                 },
 
                 calculateProgress(result) {
