@@ -2,134 +2,42 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Storage;
-use Illuminate\Container\Container as App;
-use Webkul\Core\Eloquent\Repository;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\{Log, Validator, Event, Storage};
 use Webkul\Admin\Imports\DataGridImport;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Event;
-use Webkul\Category\Repositories\CategoryRepository;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\Products\HelperRepository;
-use Webkul\Bulkupload\Repositories\ProductImageRepository;
-use Webkul\Attribute\Repositories\AttributeOptionRepository;
+use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Repositories\ProductDownloadableLinkRepository;
-use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
+use Webkul\Category\Repositories\CategoryRepository;
+use Webkul\Product\Repositories\{ProductFlatRepository, ProductRepository};
+use Webkul\Attribute\Repositories\{AttributeOptionRepository, AttributeFamilyRepository};
+use Webkul\Bulkupload\Repositories\{ProductImageRepository, Products\HelperRepository, ImportProductRepository};
 
 class DownloadableProductRepository extends Repository
 {
     /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     */
-    protected $importProductRepository;
-
-    /**
-     * CategoryRepository object
-     *
-     * @var \Webkul\Category\Repositories\CategoryRepository
-     */
-    protected $categoryRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * HelperRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\HelperRepository
-     */
-    protected $helperRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
-    /**
-     * ProductDownloadableLinkRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductDownloadableLinkRepository
-     */
-    protected $productDownloadableLinkRepository;
-
-    /**
-     * AttributeOptionRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeOptionRepository
-     */
-    protected $attributeOptionRepository;
-
-    /**
      * Create a new repository instance.
-     *
-     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
+     * @param  \Webkul\Product\Repositories\ProductDownloadableLinkRepository  $productDownloadableLinkRepository
      * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
      * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
      * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
-     * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
-     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
-     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
-     * @param  \Webkul\Product\Repositories\ProductDownloadableLinkRepository $productDownloadableLinkRepository
      * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
+     * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
+     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
+     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
+     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
      *
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        CategoryRepository $categoryRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository,
-        AttributeFamilyRepository $attributeFamilyRepository,
-        HelperRepository $helperRepository,
-        ProductImageRepository $productImageRepository,
-        ProductDownloadableLinkRepository $productDownloadableLinkRepository,
-        AttributeOptionRepository $attributeOptionRepository
-    )
-    {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->productDownloadableLinkRepository = $productDownloadableLinkRepository;
-
-        $this->categoryRepository = $categoryRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productImageRepository = $productImageRepository;
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->helperRepository = $helperRepository;
-
-        $this->attributeOptionRepository = $attributeOptionRepository;
-    }
+        protected CategoryRepository $categoryRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductRepository $productRepository,
+        protected AttributeOptionRepository $attributeOptionRepository,
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected ProductImageRepository $productImageRepository,
+        protected HelperRepository $helperRepository,
+        protected ImportProductRepository $importProductRepository,
+        protected ProductDownloadableLinkRepository $ProductDownloadableLinkRepository,
+    ) {}
 
     /*
      * Specify Model class name
@@ -151,13 +59,8 @@ class DownloadableProductRepository extends Repository
      */
     public function createProduct($requestData, $imageZipName)
     {
-        $uploadLinkFilesZipName = null;
-        $uploadSampleFilesZipName = null;
-        $uploadLinkSampleFilesZipName = null;
-
         try  {
-            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
+            $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', $requestData['data_flow_profile_id']);
 
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
 
@@ -176,7 +79,7 @@ class DownloadableProductRepository extends Repository
                 for ($i = $requestData['countOfStartedProfiles']; $i < $uptoProcessCSVRecords; $i++) {
                     $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName, $downloadableLinks);
 
-                    if (isset($invalidateProducts) && !empty($invalidateProducts)) {
+                    if (isset($invalidateProducts) && ! empty($invalidateProducts)) {
                         return $invalidateProducts;
                     }
                 }
@@ -184,7 +87,7 @@ class DownloadableProductRepository extends Repository
                 for ($i = $requestData['countOfStartedProfiles']; $i < $processRecords; $i++) {
                     $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName, $downloadableLinks);
 
-                    if (isset($invalidateProducts) && !empty($invalidateProducts)) {
+                    if (isset($invalidateProducts) && ! empty($invalidateProducts)) {
                         return $invalidateProducts;
                     }
                 }
@@ -285,7 +188,7 @@ class DownloadableProductRepository extends Repository
             $sampleType = explode(',', $csvData['sample_type']) ;
             $sampleFiles = explode(',', $csvData['sample_files']) ;
             $urlFiles = explode(',', $csvData['sample_url']) ;
-            $sampleSortOrder = !empty($csvData['sample_sort_order']) ? explode(',', $csvData['sample_sort_order']) : 0;
+            $sampleSortOrder = ! empty($csvData['sample_sort_order']) ? explode(',', $csvData['sample_sort_order']) : 0;
         }
 
         //for downloadable link explode
@@ -295,15 +198,15 @@ class DownloadableProductRepository extends Repository
 
             $linkFileNames = explode(',', $csvData['link_file_names']);
 
-            $linkPrices = !empty($csvData['link_prices']) ? explode(',', $csvData['link_prices']) : "";
+            $linkPrices = ! empty($csvData['link_prices']) ? explode(',', $csvData['link_prices']) : "";
 
-            $linkSampleTypes = !empty($csvData['link_sample_types']) ? explode(',', $csvData['link_sample_types']) : "file";
+            $linkSampleTypes = ! empty($csvData['link_sample_types']) ? explode(',', $csvData['link_sample_types']) : "file";
 
-            $linkSampleFileNames = !empty($csvData['link_sample_file_names']) ? explode(',', $csvData['link_sample_file_names']) : "";
+            $linkSampleFileNames = ! empty($csvData['link_sample_file_names']) ? explode(',', $csvData['link_sample_file_names']) : "";
 
-            $linkDownloads = !empty($csvData['link_downloads']) ? explode(',', $csvData['link_downloads']) : 0;
+            $linkDownloads = ! empty($csvData['link_downloads']) ? explode(',', $csvData['link_downloads']) : 0;
 
-            $linkSortOrders = !empty($csvData['link_sort_orders']) ? explode(',', $csvData['link_sort_orders']) : 0;
+            $linkSortOrders = ! empty($csvData['link_sort_orders']) ? explode(',', $csvData['link_sort_orders']) : 0;
 
             $linkSampleUrlNames = explode(',', $csvData['link_sample_url']);
             $linkUrlNames = explode(',', $csvData['link_url']);
@@ -319,9 +222,8 @@ class DownloadableProductRepository extends Repository
             $data['type'] = $csvData['type'];
             $data['attribute_family_id'] = $attributeFamilyData->id;
             $data['sku'] = $csvData['sku'];
-            Event::dispatch('catalog.product.create.before');
+
             $downloadableProduct = $this->productRepository->create($data);
-            Event::dispatch('catalog.product.create.after', $downloadableProduct);
         } else {
             $downloadableProduct = $productData;
         }
@@ -428,6 +330,8 @@ class DownloadableProductRepository extends Repository
 
         $data['downloadable_samples'] = $combinedArray;
 
+        $linkSampleFile = null;
+        
         //for downloadable links
         for ($j = 0; $j < count($linkTitles); $j++) {
             if (trim(strtolower($linkTypes[$j])) == "file") {
@@ -444,6 +348,8 @@ class DownloadableProductRepository extends Repository
                 } else if (trim(strtolower($linkSampleTypes[$j])) == "url") {
                     $sampleFileLink = $this->fileOrUrlUpload($dataFlowProfileRecord, $linkSampleTypes[$j], $linkSampleUrlNames[$j], $downloadableProduct->id, $downloadableLinks, $sampleLinkfile = false);
                 }
+
+                $linkFileName = null;
 
                 if (isset($downloadableLinks['uploadLinkFilesZipName'])) {
                     if (trim(strtolower($linkSampleTypes[$j-1])) == "url") {
@@ -540,7 +446,7 @@ class DownloadableProductRepository extends Repository
                 if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
                     $imagePath = storage_path('app/public/imported-products/extracted-images/   admin/'.$dataFlowProfileRecord->id);
 
-                    if (!file_exists($imagePath)) {
+                    if (! file_exists($imagePath)) {
                         mkdir($imagePath, 0777, true);
                     }
 
@@ -590,9 +496,11 @@ class DownloadableProductRepository extends Repository
             return $dataToBeReturn;
         }
 
-         Event::dispatch('catalog.product.update.before',  $downloadableProduct->id);
-         $configDownloadableProduct = $this->productRepository->update($data, $downloadableProduct->id);
-         Event::dispatch('catalog.product.update.after',$configDownloadableProduct);
+        Event::dispatch('catalog.product.update.before',  $downloadableProduct->id);
+
+        $this->productRepository->update($data, $downloadableProduct->id);
+
+        Event::dispatch('catalog.product.update.after', $downloadableProduct);
 
         if (isset($imageZipName)) {
             $this->productImageRepository->bulkuploadImages($data, $downloadableProduct, $imageZipName);
@@ -638,7 +546,7 @@ class DownloadableProductRepository extends Repository
                 if ($flag) {
                     $imagePath = storage_path('app/public/imported-products/extracted-images/admin/sample-files/'.$dataFlowProfileRecord->id);
 
-                    if (!file_exists($imagePath)) {
+                    if (! file_exists($imagePath)) {
                         mkdir($imagePath, 0777, true);
                     }
 
@@ -655,7 +563,7 @@ class DownloadableProductRepository extends Repository
                 } else {
                     $imagePath = storage_path('app/public/imported-products/extracted-images/admin/link-sample-files/'.$dataFlowProfileRecord->id);
 
-                    if (!file_exists($imagePath)) {
+                    if (! file_exists($imagePath)) {
                         mkdir($imagePath, 0777, true);
                     }
 
@@ -701,7 +609,7 @@ class DownloadableProductRepository extends Repository
             } else {
                 $imagePath = storage_path('app/public/imported-products/extracted-images/admin/link-files/'.$dataFlowProfileRecord->id);
 
-                if (!file_exists($imagePath)) {
+                if (! file_exists($imagePath)) {
                     mkdir($imagePath, 0777, true);
                 }
 
