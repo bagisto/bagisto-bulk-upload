@@ -304,7 +304,7 @@ class GroupedProductRepository extends Repository
             }
         }
 
-        $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
+        $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->data_flow_profile_id;
 
         $categoryData = explode(',', $csvData['categories_slug']);
 

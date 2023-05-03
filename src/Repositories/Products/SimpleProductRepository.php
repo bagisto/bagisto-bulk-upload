@@ -326,7 +326,7 @@ class SimpleProductRepository extends Repository
                 }
             }
 
-            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
+            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->data_flow_profile_id;
 
             $inventorySource = $csvData['inventory_sources'];
             $inventoryCode = explode(',', $inventorySource);
