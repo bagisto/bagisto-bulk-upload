@@ -5,7 +5,6 @@ namespace Webkul\Bulkupload\Repositories\Products;
 use Illuminate\Support\Facades\{Validator,Event, Log, Storage};
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Core\Eloquent\Repository;
-use Illuminate\Support\Facades\Event;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Inventory\Repositories\InventorySourceRepository;
 use Webkul\Product\Repositories\{ProductFlatRepository, ProductRepository};
@@ -68,9 +67,9 @@ class SimpleProductRepository extends Repository
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
 
             if ($requestData['totalNumberOfCSVRecord'] < 1000) {
-                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/10);
+                $processCSVRecords = $requestData['totalNumberOfCSVRecord'] / ($requestData['totalNumberOfCSVRecord']/10);
             } else {
-                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/100);
+                $processCSVRecords = $requestData['totalNumberOfCSVRecord'] / ($requestData['totalNumberOfCSVRecord']/100);
             }
 
             $uptoProcessCSVRecords = (int)$requestData['countOfStartedProfiles'] + 10;
@@ -130,7 +129,7 @@ class SimpleProductRepository extends Repository
                 $remainDataInCSV = 0;
             }
 
-            if ($categoryError[0] == "No query results for model ") {
+            if ($categoryError[0] == "No query results for model") {
                 $dataToBeReturn = array(
                     'remainDataInCSV' => $remainDataInCSV,
                     'productsUploaded' => $productsUploaded,
@@ -350,12 +349,8 @@ class SimpleProductRepository extends Repository
             }
 
             Event::dispatch('catalog.product.update.before',  $simpleproductData->id);
-<<<<<<< HEAD
-=======
 
->>>>>>> 6f00baf34795d64addb53623ebf5723a936ba7e2
             $configSimpleProductAttributeStore = $this->productRepository->update($data, $simpleproductData->id);
-            Event::dispatch('catalog.product.update.after',$configSimpleProductAttributeStore);
 
             Event::dispatch('catalog.product.update.after', $configSimpleProductAttributeStore);
 

@@ -2,152 +2,48 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Container\Container as App;
+use Illuminate\Support\Facades\{Storage, DB, Event, Validator, Schema};
 use Webkul\Admin\Imports\DataGridImport;
-use Illuminate\Support\Facades\Schema;
-use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Product\Models\ProductAttributeValue;
 use Webkul\Core\Eloquent\Repository;
-use Illuminate\Support\Facades\Event;
+use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Attribute\Repositories\AttributeRepository;
-use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\Products\HelperRepository;
-use Illuminate\Support\Facades\Validator;
-use Webkul\Product\Repositories\ProductInventoryRepository;
-use Webkul\Bulkupload\Repositories\ProductImageRepository;
-use Webkul\Attribute\Repositories\AttributeOptionRepository;
-use Webkul\Bulkupload\Repositories\BulkProductRepository;
+use Webkul\Product\Repositories\{ProductFlatRepository, ProductRepository, ProductInventoryRepository};
+use Webkul\Attribute\Repositories\{AttributeRepository, AttributeFamilyRepository, AttributeOptionRepository};
+use Webkul\Bulkupload\Repositories\{ProductImageRepository, Products\HelperRepository, BulkProductRepository};
 
 class ConfigurableProductRepository extends Repository
 {
     /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     */
-    protected $importProductRepository;
-
-    /**
-     * CategoryRepository object
-     *
-     * @var \Webkul\Category\Repositories\CategoryRepository
-     */
-    protected $categoryRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * ProductInventoryRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductInventoryRepository
-     */
-    protected $productInventoryRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * HelperRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\HelperRepository
-     */
-    protected $helperRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
-    /**
-     * BulkProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\BulkProductRepository
-     */
-    protected $bulkProductRepository;
-
-    /**
-     * AttributeOptionRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeOptionRepository
-     */
-    protected $attributeOptionRepository;
-
-    /**
      * Create a new repository instance.
      *
-     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
      * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
+     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
      * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
      * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
-     * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
-     * @param  \Webkul\Attribute\Repositories\AttributeRepository $attributeRepository
-     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
-     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
-     * @param  \Webkul\Bulkupload\Repositories\BulkProductRepository $bulkProductRepository
-     * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
      * @param  \Webkul\Product\Repositories\ProductInventoryRepository  $productInventoryRepository
+     * @param  \Webkul\Attribute\Repositories\AttributeRepository $attributeRepository
+     * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
+     * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
+     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
+     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
+     * @param  \Webkul\Bulkupload\Repositories\BulkProductRepository $bulkProductRepository
      *
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        CategoryRepository $categoryRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository,
-        AttributeFamilyRepository $attributeFamilyRepository,
-        AttributeRepository $attributeRepository,
-        HelperRepository $helperRepository,
-        ProductImageRepository $productImageRepository,
-        BulkProductRepository $bulkProductRepository,
-        AttributeOptionRepository $attributeOptionRepository,
-        ProductInventoryRepository $productInventoryRepository
-    )
-    {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->categoryRepository = $categoryRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productImageRepository = $productImageRepository;
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->attributeRepository = $attributeRepository;
-
-        $this->productInventoryRepository = $productInventoryRepository;
-
-        $this->helperRepository = $helperRepository;
-
-        $this->bulkProductRepository = $bulkProductRepository;
-
-        $this->attributeOptionRepository = $attributeOptionRepository;
-    }
+        protected CategoryRepository $categoryRepository,
+        protected ImportProductRepository $importProductRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductRepository $productRepository,
+        protected ProductInventoryRepository $productInventoryRepository,
+        protected AttributeRepository $attributeRepository,
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected AttributeOptionRepository $attributeOptionRepository,
+        protected ProductImageRepository $productImageRepository,
+        protected HelperRepository $helperRepository,
+        protected BulkProductRepository $bulkProductRepository,
+    ) {}
 
     /*
      * Specify Model class name
@@ -171,14 +67,7 @@ class ConfigurableProductRepository extends Repository
     public function createProduct($requestData, $imageZipName, $product)
     {
         try {
-            if ($requestData['totalNumberOfCSVRecord'] < 1000) {
-                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/10);
-            } else {
-                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/100);
-            }
-
-            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
+            $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', $requestData['data_flow_profile_id']);
 
             if ($dataFlowProfileRecord) {
                 $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
@@ -192,7 +81,7 @@ class ConfigurableProductRepository extends Repository
                                 try {
                                     $createValidation = $this->helperRepository->createProductValidation($csvData[$i], $i);
 
-                                    if ( isset($createValidation)) {
+                                    if (isset($createValidation)) {
                                         return $createValidation;
                                     }
 
@@ -203,9 +92,7 @@ class ConfigurableProductRepository extends Repository
                                         'url_key'   => $csvData[$i]['url_key']
                                     ]);
 
-                                    $productData = $this->productRepository->findOneWhere([
-                                        'sku'   => $csvData[$i]['sku']
-                                        ]);
+                                    $productData = $this->productRepository->findOneWhere(['sku' => $csvData[$i]['sku']]);
 
                                     $attributeFamilyData = $this->attributeFamilyRepository->findOneByfield('name', $csvData[$i]['attribute_family_name']);
 
@@ -214,14 +101,13 @@ class ConfigurableProductRepository extends Repository
                                         $data['attribute_family_id'] = $attributeFamilyData->id;
                                         $data['sku'] = $csvData[$i]['sku'];
 
-                                        Event::dispatch('catalog.product.create.before');
-                                        $configSimpleproduct = $this->productRepository->create($data);
-                                        Event::dispatch('catalog.product.create.after', $configSimpleproduct);
+                                        $product = $this->bulkProductRepository->create($data);
                                     } else {
                                         $product = $productData;
                                     }
 
                                     unset($data);
+
                                     $data = [];
                                     $attributeCode = [];
                                     $attributeValue = [];
@@ -299,11 +185,11 @@ class ConfigurableProductRepository extends Repository
                                             if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
                                                 $imagePath = storage_path('app/public/  imported-products/extracted-images/admin/'.   $dataFlowProfileRecord->id);
 
-                                                if (!file_exists($imagePath)) {
+                                                if (! file_exists($imagePath)) {
                                                     mkdir($imagePath, 0777, true);
                                                 }
 
-                                                $imageFile = $imagePath.'/'.basename($imageURL) ;
+                                                $imageFile = $imagePath.'/'.basename($imageURL);
 
                                                 file_put_contents($imageFile, file_get_contents (trim($imageURL)));
 
@@ -312,7 +198,11 @@ class ConfigurableProductRepository extends Repository
                                         }
                                     }
 
-                                    $productAttributeStore = $this->bulkProductRepository->productRepositoryUpdateForVariants($data, $product->id);
+                                    Event::dispatch('catalog.product.update.before',  $product->id);
+
+                                    $productUpdate = $this->productRepository->update($data, $product->id);
+
+                                    Event::dispatch('catalog.product.update.after', $productUpdate);
 
                                     if (isset($imageZipName)) {
                                         $this->productImageRepository->bulkuploadImages($data, $product, $imageZipName);
@@ -325,8 +215,6 @@ class ConfigurableProductRepository extends Repository
                                     }
 
                                     $product['productFlatId'] = $productFlatData->id;
-
-                                    $arr[] = $productFlatData->id;
 
                                     unset($categoryID);
                                 } catch (\Exception $e) {
@@ -346,8 +234,9 @@ class ConfigurableProductRepository extends Repository
                                             'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
                                             'error' => "Invalid Category Slug: " . $categorySlugError[1],
                                         );
+
                                         $categoryError[0] = null;
-                                    } else if (isset($e->errorInfo)) {
+                                    } elseif (isset($e->errorInfo)) {
                                         $dataToBeReturn = array(
                                             'remainDataInCSV' => $remainDataInCSV,
                                             'productsUploaded' => $requestData['productUploaded'],
@@ -362,12 +251,12 @@ class ConfigurableProductRepository extends Repository
                                             'error' => $e->getMessage(),
                                         );
                                     }
+
                                     return $dataToBeReturn;
                                 }
-                            } else if (isset($product['productFlatId'])) {
+                            } elseif (isset($product['productFlatId'])) {
                                 try {
                                     $current = $product['loopCount'];
-                                    $num = 0;
                                     $inventory = [];
 
                                     $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
@@ -381,10 +270,8 @@ class ConfigurableProductRepository extends Repository
                                                 'url_key'   => null
                                             ]);
 
-                                            $productData = $this->productRepository->findOneWhere([
-                                                'sku'   => $csvData[$i]['sku']
-                                                ]);
-
+                                            $productData = $this->productRepository->findOneWhere(['sku' => $csvData[$i]['sku']]);
+                                            
                                             $attributeFamilyData = $this->attributeFamilyRepository->findOneWhere([
                                                 'name' => $csvData[$i]['attribute_family_name']
                                             ]);
@@ -395,7 +282,11 @@ class ConfigurableProductRepository extends Repository
                                                 $data['attribute_family_id'] = $attributeFamilyData->id;
                                                 $data['sku']        = $csvData[$i]['sku'];
 
+                                                Event::dispatch('catalog.product.create.before');
+                                                
                                                 $configSimpleproduct = $this->productRepository->create($data);
+
+                                                Event::dispatch('catalog.product.create.after', $configSimpleproduct);
                                             } else {
                                                 $configSimpleproduct = $productData;
                                             }
@@ -439,7 +330,7 @@ class ConfigurableProductRepository extends Repository
 
                                                 return $dataToBeReturn;
                                             }
-
+                                            
                                             $inventory_data = core()->getCurrentChannel()->inventory_sources;
 
                                             foreach($inventory_data as $key => $datas) {
@@ -497,15 +388,15 @@ class ConfigurableProductRepository extends Repository
                                             $data['width'] = (string)$csvData[$i]['width'];
                                             $data['height'] = (string)$csvData[$i]['height'];
                                             $data['depth'] = (string)$csvData[$i]['depth'];
-                                            $data['status'] = (string)$csvData[$i]['status'];
                                             $data['attribute_family_id'] = $attributeFamilyData->id;
                                             $data['short_description'] = (string)$csvData[$i]['short_description'];
                                             $data['sku'] = (string)$csvData[$i]['sku'];
                                             $data['name'] = (string)$csvData[$i]['name'];
                                             $data['weight'] = (string)$csvData[$i]['super_attribute_weight'];
                                             $data['status'] = (string)$csvData[$i]['status'];
+                                            $data['type'] = (string)$csvData[$i]['type'];
 
-                                            if ( isset($data['super_attributes'])) {
+                                            if (isset($data['super_attributes'])) {
                                                 foreach ($data['super_attributes'] as $attributeCode => $attributeOptions) {
                                                     $attribute = $this->attributeRepository->findOneByField('code', $attributeCode);
 
@@ -538,7 +429,7 @@ class ConfigurableProductRepository extends Repository
                                                     if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
                                                         $imagePath = storage_path('app/public/  imported-products/extracted-images/admin/'.   $dataFlowProfileRecord->id);
 
-                                                        if (!file_exists($imagePath)) {
+                                                        if (! file_exists($imagePath)) {
                                                             mkdir($imagePath, 0777, true);
                                                         }
 
@@ -551,7 +442,11 @@ class ConfigurableProductRepository extends Repository
                                                 }
                                             }
 
-                                            $configSimpleProductAttributeStore = $this->bulkProductRepository->productRepositoryUpdateForVariants($data, $configSimpleproduct->id);
+                                            Event::dispatch('catalog.product.update.before', $configSimpleproduct->id);
+
+                                            $configSimpleProductAttributeStore = $this->productRepository->update($data, $configSimpleproduct->id);
+
+                                            Event::dispatch('catalog.product.update.after', $configSimpleProductAttributeStore);
 
                                             if (isset($imageZipName)) {
                                                 $this->productImageRepository->bulkuploadImages($data, $configSimpleproduct, $imageZipName);
@@ -657,7 +552,9 @@ class ConfigurableProductRepository extends Repository
                         'locale' => $locale->code
                     ]);
                 }
+
                 foreach ($familyAttributes[$product->attribute_family->id] as $attribute) {
+            
                     if ($parentProduct && ! in_array($attribute->code, array_merge($superAttributes[$parentProduct->id], ['sku', 'name', 'price', 'weight', 'status'])))
                         continue;
 
@@ -684,11 +581,11 @@ class ConfigurableProductRepository extends Repository
                     if ($product->type == 'configurable' && $attribute->code == 'price') {
                         try {
                             $productFlat->{$attribute->code} = app('Webkul\Bulkupload\Helpers\Price')->getVariantMinPrice($product);
-                        } catch(\Exception $e) {}
+                        } catch (\Exception $e) {}
                     } else {
                         try {
                             $productFlat->{$attribute->code} = $productAttributeValue[ProductAttributeValue::$attributeTypeFields[$attribute->type]];
-                        } catch(\Exception $e) {}
+                        } catch (\Exception $e) {}
                     }
 
                     if ($attribute->type == 'select') {
@@ -726,19 +623,9 @@ class ConfigurableProductRepository extends Repository
 
                 $productFlat->updated_at = $product->updated_at;
 
-                if ($parentProduct) {
-                    $parentProductFlat = $this->productFlatRepository->findOneWhere([
-                        'product_id' => $parentProduct->id,
-                        'channel' => $channel->code,
-                        'locale' => $locale->code
-                    ]);
-                }
-
                 $productFlat->parent_id = $product->parent_id;
 
                 $productFlat->save();
-
-                $product->parent_id--;
             }
         }
     }

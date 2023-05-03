@@ -94,13 +94,12 @@ class BulkProductRepository extends Repository
 
         $product = $this->find($id);
 
-        $configurable = app('Webkul\Product\Type\Configurable');
-
-        if ($product->parent_id && $configurable->checkVariantOptionAvailabiliy($data, $product)) {
+        if ($product->parent_id) {
             $data['parent_id'] = NULL;
         }
 
         $product->update($data);
+
 
         $attributes = $product->attribute_family->custom_attributes;
 
@@ -175,6 +174,7 @@ class BulkProductRepository extends Repository
             }
 
             $previousVariantIds = $product->variants->pluck('id');
+            
             if (isset($data['variants'])) {
                 foreach ($data['variants'] as $variantId => $variantData) {
                     if (str_contains($variantId, 'variant_')) {
@@ -183,7 +183,7 @@ class BulkProductRepository extends Repository
                             $permutation[$superAttribute->id] = $variantData[$superAttribute->code];
                         }
 
-                        $this->productRepository>createVariant($product, $permutation, $variantData);
+                        $this->productRepository->createVariant($product, $permutation, $variantData);
                     } else {
                         if (is_numeric($index = $previousVariantIds->search($variantId))) {
                             $previousVariantIds->forget($index);
