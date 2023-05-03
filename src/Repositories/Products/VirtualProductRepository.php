@@ -2,134 +2,43 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Storage;
-use Illuminate\Container\Container as App;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\{Validator, Storage, Log, Event};
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Admin\Imports\DataGridImport;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Event;
 use Webkul\Category\Repositories\CategoryRepository;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
 use Webkul\Inventory\Repositories\InventorySourceRepository;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\Products\HelperRepository;
-use Webkul\Attribute\Repositories\AttributeOptionRepository;
-use Webkul\Bulkupload\Repositories\ProductImageRepository;
-use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
+use Webkul\Product\Repositories\{ProductFlatRepository, ProductRepository};
+use Webkul\Attribute\Repositories\{AttributeFamilyRepository, AttributeOptionRepository};
+use Webkul\Bulkupload\Repositories\{Products\HelperRepository, ImportProductRepository, ProductImageRepository};
 
 class VirtualProductRepository extends Repository
 {
     /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     */
-    protected $importProductRepository;
-
-    /**
-     * CategoryRepository object
-     *
-     * @var \Webkul\Category\Repositories\CategoryRepository
-     */
-    protected $categoryRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * HelperRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\HelperRepository
-     */
-    protected $helperRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
-    /**
-     * AttributeOptionRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeOptionRepository
-     */
-    protected $attributeOptionRepository;
-
-    /**
-     * InventorySourceRepository object
-     *
-     * @var \Webkul\Inventory\Repositories\InventorySourceRepository
-     */
-    protected $inventorySourceRepository;
-
-    /**
      * Create a new repository instance.
      *
-     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
      * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
+     * @param  \Webkul\Inventory\Repositories\InventorySourceRepository  $inventorySourceRepository
      * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
      * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
      * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
-     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
-     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
      * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
-     * @param  \Webkul\Inventory\Repositories\InventorySourceRepository  $inventorySourceRepository
+     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
+     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
+     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
      *
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        CategoryRepository $categoryRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository,
-        AttributeFamilyRepository $attributeFamilyRepository,
-        HelperRepository $helperRepository,
-        ProductImageRepository $productImageRepository,
-        AttributeOptionRepository $attributeOptionRepository,
-        InventorySourceRepository $inventorySourceRepository
-    )
-    {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->categoryRepository = $categoryRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productImageRepository = $productImageRepository;
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->helperRepository = $helperRepository;
-
-        $this->attributeOptionRepository = $attributeOptionRepository;
-
-        $this->inventorySourceRepository = $inventorySourceRepository;
-    }
+        protected CategoryRepository $categoryRepository,
+        protected InventorySourceRepository $inventorySourceRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductRepository $productRepository,
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected AttributeOptionRepository $attributeOptionRepository,
+        protected HelperRepository $helperRepository,
+        protected ImportProductRepository $importProductRepository,
+        protected ProductImageRepository $productImageRepository,
+    ) {}
 
     /*
      * Specify Model class name
@@ -153,9 +62,7 @@ class VirtualProductRepository extends Repository
     {
         try  {
             $inventory = [];
-
-            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
+            $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', $requestData['data_flow_profile_id']);
 
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
 
@@ -279,10 +186,8 @@ class VirtualProductRepository extends Repository
                 $data['type'] = $csvData['type'];
                 $data['attribute_family_id'] = $attributeFamilyData->id;
                 $data['sku'] = $csvData['sku'];
-                Event::dispatch('catalog.product.create.before');
-                $virtualProductData = $this->productRepository->create($data);
-                Event::dispatch('catalog.product.create.after', $virtualProductData);
 
+                $virtualProductData = $this->productRepository->create($data);
             } else {
                 $virtualProductData = $productData;
             }
@@ -429,9 +334,11 @@ class VirtualProductRepository extends Repository
                 return $dataToBeReturn;
             }
 
-               Event::dispatch('catalog.product.update.before',  $virtualProductData->id);
-              $configVirtualProduct = $this->productRepository->update($data, $virtualProductData->id);
-              Event::dispatch('catalog.product.update.after',$configVirtualProduct);
+            Event::dispatch('catalog.product.update.before',  $virtualProductData->id);
+
+            $virutalProduct = $this->productRepository->update($data, $virtualProductData->id);
+
+            Event::dispatch('catalog.product.update.after', $virutalProduct);
 
             if (isset($imageZipName)) {
                 $this->productImageRepository->bulkuploadImages($data, $virtualProductData, $imageZipName);
