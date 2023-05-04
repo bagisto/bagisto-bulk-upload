@@ -57,7 +57,7 @@ return [
                 'image' => 'Image Zip file',
                 'save' => 'Save',
                 'select-sample-file' => 'Please select a sample file name',
-                'bundle-download-warn' => 'Please make sure hat Bundle Product is associated with other productd, in bundle_options product_id must be available in products table.',
+                'bundle-download-warn' => 'Please make sure that Bundle Product is associated with other products, in bundle_options product_id must be available in products table.',
             ],
 
             'messages' => [
