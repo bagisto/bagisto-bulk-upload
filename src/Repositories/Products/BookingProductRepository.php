@@ -2,80 +2,16 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Storage;
-use Webkul\Core\Eloquent\Repository;
-use Illuminate\Container\Container as App;
+use Illuminate\Support\Facades\{Validator, Event, Storage, Log};
 use Webkul\Admin\Imports\DataGridImport;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Event;
+use Webkul\Core\Eloquent\Repository;
 use Webkul\Category\Repositories\CategoryRepository;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\Products\HelperRepository;
-use Webkul\Attribute\Repositories\AttributeOptionRepository;
-use Webkul\Bulkupload\Repositories\ProductImageRepository;
-use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
+use Webkul\Product\Repositories\{ProductFlatRepository, ProductRepository};
+use Webkul\Attribute\Repositories\{AttributeOptionRepository, AttributeFamilyRepository};
+use Webkul\Bulkupload\Repositories\{ProductImageRepository, Products\HelperRepository, ImportProductRepository};
 
 class BookingProductRepository extends Repository
 {
-    /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     */
-    protected $importProductRepository;
-
-    /**
-     * CategoryRepository object
-     *
-     * @var \Webkul\Category\Repositories\CategoryRepository
-     */
-    protected $categoryRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * HelperRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\HelperRepository
-     */
-    protected $helperRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
-    /**
-     * AttributeOptionRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeOptionRepository
-     */
-    protected $attributeOptionRepository;
-
     /**
      * Create a new repository instance.
      *
@@ -91,32 +27,15 @@ class BookingProductRepository extends Repository
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        CategoryRepository $categoryRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository,
-        AttributeFamilyRepository $attributeFamilyRepository,
-        HelperRepository $helperRepository,
-        ProductImageRepository $productImageRepository,
-        AttributeOptionRepository $attributeOptionRepository
-    )
-    {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->categoryRepository = $categoryRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productImageRepository = $productImageRepository;
-
-        $this->attributeOptionRepository = $attributeOptionRepository;
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->helperRepository = $helperRepository;
-    }
+        protected ImportProductRepository $importProductRepository,
+        protected CategoryRepository $categoryRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductRepository $productRepository,
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected HelperRepository $helperRepository,
+        protected ProductImageRepository $productImageRepository,
+        protected AttributeOptionRepository $attributeOptionRepository
+    ) {}
 
     /*
      * Specify Model class name
@@ -139,8 +58,7 @@ class BookingProductRepository extends Repository
     public function createProduct($requestData, $imageZipName)
     {
         try  {
-            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
+            $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', $requestData['data_flow_profile_id']);
 
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
 
@@ -163,7 +81,7 @@ class BookingProductRepository extends Repository
                         return $invalidateProducts;
                     }
                 }
-            } else if ($requestData['numberOfCSVRecord'] <= 10) {
+            } elseif ($requestData['numberOfCSVRecord'] <= 10) {
                 for ($i = $requestData['countOfStartedProfiles']; $i < $processRecords; $i++) {
                     $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName);
 
@@ -195,7 +113,7 @@ class BookingProductRepository extends Repository
 
             return $dataToBeReturn;
         } catch(\Exception $e) {
-            \Log::error('booking create product log: '. $e->getMessage());
+            Log::error('booking create product log: '. $e->getMessage());
 
             $categoryError = explode('[' ,$e->getMessage());
             $categorySlugError = explode(']' ,$e->getMessage());
@@ -216,7 +134,7 @@ class BookingProductRepository extends Repository
                     'error' => "Invalid Category Slug: " . $categorySlugError[1],
                 );
                 $categoryError[0] = null;
-            } else if (isset($e->errorInfo)) {
+            } elseif (isset($e->errorInfo)) {
                 $dataToBeReturn = array(
                     'remainDataInCSV' => $remainDataInCSV,
                     'productsUploaded' => $productsUploaded,
@@ -268,10 +186,8 @@ class BookingProductRepository extends Repository
                 $data['type'] = $csvData['type'];
                 $data['attribute_family_id'] = $attributeFamilyData->id;
                 $data['sku'] = $csvData['sku'];
-                Event::dispatch('catalog.product.create.before');
-                $bookingProductData = $this->productRepository->create($data);
-                Event::dispatch('catalog.product.create.after', $bookingProductData);
 
+                $bookingProductData = $this->productRepository->create($data);
             } else {
                 $bookingProductData = $productData;
             }
@@ -303,7 +219,7 @@ class BookingProductRepository extends Repository
                 }
             }
 
-            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
+            $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->data_flow_profile_id;
 
             $categoryData = explode(',', $csvData['categories_slug']);
 
@@ -321,6 +237,7 @@ class BookingProductRepository extends Repository
             $data['channel'] = core()->getCurrentChannel()->code;
 
             $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
+
             $data['locale'] = $dataProfile->locale_code;
 
             //customerGroupPricing
@@ -329,20 +246,31 @@ class BookingProductRepository extends Repository
                 app(ProductCustomerGroupPriceRepository::class)->saveCustomerGroupPrices($data, $simpleproductData);
             }
 
-            //booking product attributes
 
-            if (strtolower($csvData['booking_type']) == "default") {
-                $booking = $this->defaultBookingType($csvData);
-            } else if (strtolower($csvData['booking_type']) == "appointment") {
-                $booking = $this->appointmentBookingType($csvData);
-            } else if (strtolower($csvData['booking_type']) == "event") {
-                $booking = $this->eventBookingType($csvData);
-            } else if (strtolower($csvData['booking_type']) == "rental") {
-                $booking = $this->rentalBookingType($csvData);
-            } else if (strtolower($csvData['booking_type']) == "table") {
-                $booking = $this->tableBookingType($csvData);
-            } else {
-                \Log::error('booking type not found');
+            switch (strtolower($csvData['booking_type'])) {
+                case 'default':
+                    $booking = $this->defaultBookingType($csvData);
+                    break;
+
+                case 'appointment':
+                    $booking = $this->appointmentBookingType($csvData);
+                    break;
+
+                case 'event':
+                    $booking = $this->eventBookingType($csvData);
+                    break;
+
+                case 'rental':
+                    $booking = $this->rentalBookingType($csvData);
+                    break;
+
+                case 'table':
+                    $booking = $this->tableBookingType($csvData);
+                    break;
+
+                default:
+                    $booking = [];
+                    break;
             }
 
             $data['booking'] = $booking;
@@ -360,7 +288,7 @@ class BookingProductRepository extends Repository
                     $data['images'][$imageArraykey] = $imagePath;
                 }
                 }
-            } else if (isset($csvData['images'])) {
+            } elseif (isset($csvData['images'])) {
                 foreach ($individualProductimages as $imageArraykey => $imageURL)
                 {
                     if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
@@ -419,17 +347,20 @@ class BookingProductRepository extends Repository
 
             request()->request->add(['booking' => $booking]);
 
-            Event::dispatch('catalog.product.update.before', $bookingProductData->id);
-            $configBookingProduct = $this->productRepository->update($data, $bookingProductData->id);
-            Event::dispatch('catalog.product.update.after',$configBookingProduct);
+            Event::dispatch('catalog.product.update.before',  $bookingProductData->id);
+
+            $bookingProductUpdate = $this->productRepository->update($data, $bookingProductData->id);
+
+            Event::dispatch('catalog.product.update.after', $bookingProductUpdate);
 
             if (isset($imageZipName)) {
                 $this->productImageRepository->bulkuploadImages($data, $bookingProductData, $imageZipName);
-            } else if (isset($csvData['images'])) {
+            } elseif (isset($csvData['images'])) {
                 $this->productImageRepository->bulkuploadImages($data, $bookingProductData, $imageZipName = null);
             }
         } catch(\Exception $e) {
-            \Log::error('booking product store function'. $e->getMessage());
+            dd($e);
+            Log::error('booking product store function '. $e->getMessage());
         }
     }
 
@@ -443,7 +374,7 @@ class BookingProductRepository extends Repository
     public function defaultBookingType($data)
     {
         try {
-            if (isset($data['booking_slot_from']) && !empty($data['booking_slot_from'])) {
+            if (isset($data['booking_slot_from']) && ! empty($data['booking_slot_from'])) {
                 $slot = $this->prepareDefaultBookingSlots($data);
             }
 
@@ -457,7 +388,7 @@ class BookingProductRepository extends Repository
 
             $availableFrom = explode(',', $data['booking_available_from']);
 
-            foreach ($availableFrom as $key => $availableDateTime) {
+            foreach ($availableFrom as $availableDateTime) {
                 $dateFormat = str_replace('/', '-', $availableFrom["0"]);
                 $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -468,7 +399,7 @@ class BookingProductRepository extends Repository
 
             $availableTo = explode(',' , $data['booking_available_to']);
 
-            foreach ($availableTo as $key => $availableDateTime) {
+            foreach ($availableTo as $availableDateTime) {
                 $dateFormat = str_replace('/', '-', $availableTo["0"]);
                 $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -494,7 +425,7 @@ class BookingProductRepository extends Repository
 
             return $booking;
         } catch (\Exception $e) {
-            \Log::error('booking defaultBookingType log: '. $e->getMessage());
+            Log::error('booking defaultBookingType log: '. $e->getMessage());
         }
     }
 
@@ -508,7 +439,7 @@ class BookingProductRepository extends Repository
     public function appointmentBookingType($data)
     {
         try {
-            if (isset($data['booking_slot_from']) && !empty($data['booking_slot_from'])) {
+            if (isset($data['booking_slot_from']) && ! empty($data['booking_slot_from'])) {
                 $slot = $this->prepareAppointmentBookingSlots($data);
             }
 
@@ -525,7 +456,7 @@ class BookingProductRepository extends Repository
             } else {
                 $availableFrom = explode(',', $data['booking_available_from']);
 
-                foreach ($availableFrom as $key => $availableDateTime) {
+                foreach ($availableFrom as $availableDateTime) {
                     $dateFormat = str_replace('/', '-', $availableFrom["0"]);
                     $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -536,7 +467,7 @@ class BookingProductRepository extends Repository
 
                 $availableTo = explode(',' , $data['booking_available_to']);
 
-                foreach ($availableTo as $key => $availableDateTime) {
+                foreach ($availableTo as $availableDateTime) {
                     $dateFormat = str_replace('/', '-', $availableTo["0"]);
                     $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -564,12 +495,12 @@ class BookingProductRepository extends Repository
 
             return $appointment;
         } catch (\Exception $e) {
-            \Log::error('booking appointmentBookingType log: '. $e->getMessage());
+            Log::error('booking appointmentBookingType log: '. $e->getMessage());
         }
     }
 
     /**
-     * prepare data for event booking-type
+     * Prepare data for event booking-type
      *
      * @param array $data
      *
@@ -584,7 +515,7 @@ class BookingProductRepository extends Repository
 
             $availableFrom = explode(',', $data['booking_available_from']);
 
-            foreach ($availableFrom as $key => $availableDateTime) {
+            foreach ($availableFrom as $availableDateTime) {
                 $dateFormat = str_replace('/', '-', $availableFrom["0"]);
                 $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -595,7 +526,7 @@ class BookingProductRepository extends Repository
 
             $availableTo = explode(',' , $data['booking_available_to']);
 
-            foreach ($availableTo as $key => $availableDateTime) {
+            foreach ($availableTo as $availableDateTime) {
                 $dateFormat = str_replace('/', '-', $availableTo["0"]);
                 $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -617,7 +548,7 @@ class BookingProductRepository extends Repository
 
             return $booking;
         } catch (\Exception $e) {
-            \Log::error('booking eventBookingType log: '. $e->getMessage());
+            Log::error('booking eventBookingType log: '. $e->getMessage());
         }
     }
 
@@ -636,7 +567,7 @@ class BookingProductRepository extends Repository
 
                 $availableFrom = explode(',', $data['booking_available_from']);
 
-                foreach ($availableFrom as $key => $availableDateTime) {
+                foreach ($availableFrom as $availableDateTime) {
                     $dateFormat = str_replace('/', '-', $availableFrom["0"]);
                     $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -647,7 +578,7 @@ class BookingProductRepository extends Repository
 
                 $availableTo = explode(',' , $data['booking_available_to']);
 
-                foreach ($availableTo as $key => $availableDateTime) {
+                foreach ($availableTo as $availableDateTime) {
                     $dateFormat = str_replace('/', '-', $availableTo["0"]);
                     $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -671,7 +602,7 @@ class BookingProductRepository extends Repository
                     "renting_type" => "daily",
                     "daily_price" => $data['daily_price'] ?? 0,
                 ];
-            } else if ($data['renting_type'] == "hourly") {
+            } elseif ($data['renting_type'] == "hourly") {
                 $slot = $this->prepareRentalBookingSlots($data);
 
                 $booking = [
@@ -687,7 +618,7 @@ class BookingProductRepository extends Repository
                 if (! empty($slot)) {
                     $booking['slots'] = $slot;
                 }
-            } else if ($data['renting_type'] == "daily_hourly") {
+            } elseif ($data['renting_type'] == "daily_hourly") {
                 $slot = $this->prepareRentalBookingSlots($data);
 
                 if (trim(strtolower($data['same_slot_all_days'])) == "no" || empty($data['same_slot_all_days'])) {
@@ -712,7 +643,7 @@ class BookingProductRepository extends Repository
 
             return $booking;
         } catch (\Exception $e) {
-            \Log::error('booking rentalBookingType log: '. $e->getMessage());
+            Log::error('booking rentalBookingType log: '. $e->getMessage());
         }
     }
 
@@ -731,7 +662,7 @@ class BookingProductRepository extends Repository
 
                 $availableFrom = explode(',', $data['booking_available_from']);
 
-                foreach ($availableFrom as $key => $availableDateTime) {
+                foreach ($availableFrom as $availableDateTime) {
                     $dateFormat = str_replace('/', '-', $availableFrom["0"]);
                     $date = date('Y-m-d', strtotime($dateFormat));
 
@@ -785,7 +716,7 @@ class BookingProductRepository extends Repository
 
             return $booking;
         } catch (\Exception $e) {
-            \Log::error('booking tableBookingType log: '. $e->getMessage());
+            Log::error('booking tableBookingType log: '. $e->getMessage());
         }
     }
 
@@ -794,7 +725,7 @@ class BookingProductRepository extends Repository
      *
      * @param array $data
      *
-     * @return array
+     * @return array|void
      */
     public function prepareDefaultBookingSlots($record)
     {
@@ -838,7 +769,7 @@ class BookingProductRepository extends Repository
 
             return $slotter;
         } catch(\Exception $e) {
-            \Log::error('booking prepareDefaultBookingSlots log: '. $e->getMessage());
+            Log::error('booking prepareDefaultBookingSlots log: '. $e->getMessage());
         }
     }
 
@@ -847,7 +778,7 @@ class BookingProductRepository extends Repository
      *
      * @param array $data
      *
-     * @return array
+     * @return array|void
      */
     public function prepareAppointmentBookingSlots($record)
     {
@@ -881,7 +812,7 @@ class BookingProductRepository extends Repository
 
             return $slotter;
         } catch (\Exception $e) {
-            \Log::error('booking prepareAppointmentBookingSlots log: '. $e->getMessage());
+            Log::error('booking prepareAppointmentBookingSlots log: '. $e->getMessage());
         }
     }
 
@@ -890,7 +821,7 @@ class BookingProductRepository extends Repository
      *
      * @param array $data
      *
-     * @return array
+     * @return array|void
      */
     public function prepareEventBookingTickets($record)
     {
@@ -913,7 +844,7 @@ class BookingProductRepository extends Repository
 
             return $slotter;
         } catch (\Exception $e) {
-            \Log::error('booking prepareEventBookingTickets log: '. $e->getMessage());
+            Log::error('booking prepareEventBookingTickets log: '. $e->getMessage());
         }
     }
 
@@ -922,7 +853,7 @@ class BookingProductRepository extends Repository
      *
      * @param array $data
      *
-     * @return array
+     * @return array|void
      */
     public function prepareRentalBookingSlots($record)
     {
@@ -958,7 +889,7 @@ class BookingProductRepository extends Repository
 
             return $slotter;
         } catch (\Exception $e) {
-            \Log::error('booking prepareRentalBookingSlots log: '. $e->getMessage());
+            Log::error('booking prepareRentalBookingSlots log: '. $e->getMessage());
         }
     }
 
@@ -967,7 +898,7 @@ class BookingProductRepository extends Repository
      *
      * @param array $data
      *
-     * @return array
+     * @return array|void
      */
     public function prepareTableBookingSlots($record)
     {
@@ -1003,7 +934,7 @@ class BookingProductRepository extends Repository
 
             return $slotter;
         } catch (\Exception $e) {
-            \Log::error('booking prepareTableBookingSlots log: '. $e->getMessage());
+            Log::error('booking prepareTableBookingSlots log: '. $e->getMessage());
         }
     }
 }
