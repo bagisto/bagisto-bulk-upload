@@ -15,29 +15,9 @@
                         <div class="account-table-content">
                             @csrf
                             <div class="control-group" :class="[errors.has('download_sample') ? 'has-error' : '']">
-                                <select class="control" v-validate="'required'" id="download-sample" name="download_sample"  data-vv-as="&quot;{{ __('bulkupload::app.admin.bulk-upload.upload-files.download-sample') }}&quot;" >
-                                    <option value="">
-                                        {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
-                                    </option>
 
-                                    @foreach($productTypes as $key => $productType)
-                                        <option value="{{ $key }}-csv">
-                                            {{ __('bulkupload::app.admin.bulk-upload.upload-files.csv-file', ['filetype' => ucwords($key) ]) }}
-                                        </option>
+                                <custom-select />
 
-                                        <option value="{{ $key }}-xls">
-                                            {{ __('bulkupload::app.admin.bulk-upload.upload-files.xls-file', ['filetype' => ucwords($key) ]) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <span class="control-error" v-if="errors.has('download_sample')" v-text="errors.first('download_sample')"></span>
-
-                                <div class="mt-10">
-                                    <button type="submit" class="btn btn-lg btn-primary">
-                                        {{ __('bulkupload::app.admin.bulk-upload.upload-files.download') }}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </form>
@@ -232,6 +212,58 @@
 
                 showSamples: function() {
                     this.sampleFile = ! this.sampleFile;
+                }
+            }
+        })
+    </script>
+@endpush
+
+@push('scripts')
+    <script type="text/x-template" id="custom-select-template">
+        <div>
+            <select class="control" v-validate="'required'" @change="checkFileToDownload" id="download-sample" name="download_sample"  data-vv-as="&quot;{{ __('bulkupload::app.admin.bulk-upload.upload-files.download-sample') }}&quot;" >
+                <option value="">
+                    {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
+                </option>
+
+                @foreach($productTypes as $key => $productType)
+                    <option value="{{ $key }}-csv">
+                        {{ __('bulkupload::app.admin.bulk-upload.upload-files.csv-file', ['filetype' => ucwords($key) ]) }}
+                    </option>
+
+                    <option value="{{ $key }}-xls">
+                        {{ __('bulkupload::app.admin.bulk-upload.upload-files.xls-file', ['filetype' => ucwords($key) ]) }}
+                    </option>
+                @endforeach
+            </select>
+            <span class="control-info mt-10" v-if="showwarn">@{{msg}}</span>
+            <span class="control-error" v-if="errors.has('download_sample')" v-text="errors.first('download_sample')"></span>
+
+
+            <div class="mt-10">
+                <button type="submit" class="btn btn-lg btn-primary">
+                    {{ __('bulkupload::app.admin.bulk-upload.upload-files.download') }}
+                </button>
+            </div>
+        </div>
+    </script>
+
+    <script>
+        Vue.component('custom-select', {
+            template: '#custom-select-template',
+            data: function() {
+                return {
+                    showwarn: false,
+                    msg: '',
+                    fileType: ['bundle-csv', 'bundle-xls']
+                }
+            },
+
+            methods:{
+                checkFileToDownload(event) {
+                    if (this.showwarn = this.fileType.indexOf(event.target.value) !== -1) {
+                        this.msg = "{{ __('bulkupload::app.admin.bulk-upload.upload-files.bundle-download-warn') }}"
+                    }
                 }
             }
         })

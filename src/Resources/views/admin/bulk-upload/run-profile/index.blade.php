@@ -27,16 +27,15 @@
 
                         <select class="control" id="data-flow-profile"  v-model="data_flow_profile" name="data_flow_profile">
                             <option>{{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}</option>
-
-                                @if (isset($profiles))
-                                    @foreach ($profiles as $profile)
-                                        @foreach ($profile as $getProfileToExecute)
-                                            <option value="{{ $getProfileToExecute->id }}">
-                                                {{ $getProfileToExecute->name }}
-                                            </option>
-                                        @endforeach
+                            @if (isset($profiles))
+                                @foreach ($profiles as $profile)
+                                    @foreach ($profile as $getProfileToExecute)
+                                        <option value="{{ $getProfileToExecute->id }}">
+                                            {{ $getProfileToExecute->name }}
+                                        </option>
                                     @endforeach
-                                @endif
+                                @endforeach
+                            @endif
                         </select>
 
                         <div class="page-action">
@@ -82,8 +81,7 @@
             </li>
 
             <li>
-                <progress class="progression" v-if="this.remainData > '0'" :value="percentCount" max="100">
-                </progress>
+                <progress class="progression" v-if="this.remainData > '0'" :value="percentCount" max="100"></progress>
                 <progress class="progression" v-else :value="100" max="100"></progress>
 
                 <span style="vertical-align: 75%;" v-if="this.remainData > '0'"> @{{ this.percentCount}}%</span>
