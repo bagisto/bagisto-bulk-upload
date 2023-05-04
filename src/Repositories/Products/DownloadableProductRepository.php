@@ -498,9 +498,9 @@ class DownloadableProductRepository extends Repository
 
         Event::dispatch('catalog.product.update.before',  $downloadableProduct->id);
 
-        $this->productRepository->update($data, $downloadableProduct->id);
+        $downloadableProductUpdate = $this->productRepository->update($data, $downloadableProduct->id);
 
-        Event::dispatch('catalog.product.update.after', $downloadableProduct);
+        Event::dispatch('catalog.product.update.after', $downloadableProductUpdate);
 
         if (isset($imageZipName)) {
             $this->productImageRepository->bulkuploadImages($data, $downloadableProduct, $imageZipName);

@@ -349,9 +349,9 @@ class GroupedProductRepository extends Repository
 
         Event::dispatch('catalog.product.update.before',  $groupedProduct->id);
 
-        $this->productRepository->update($data, $groupedProduct->id);
+        $groupedProductUpdate = $this->productRepository->update($data, $groupedProduct->id);
 
-        Event::dispatch('catalog.product.update.after', $groupedProduct);
+        Event::dispatch('catalog.product.update.after', $groupedProductUpdate);
 
         if (isset($imageZipName)) {
             $this->productImageRepository->bulkuploadImages($data, $groupedProduct, $imageZipName);
