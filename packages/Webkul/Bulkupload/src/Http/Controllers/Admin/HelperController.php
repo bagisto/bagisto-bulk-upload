@@ -98,7 +98,7 @@ class HelperController extends Controller
 
         $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', request()->input('data_flow_profile_id'));
 
-        $this->dataFlowProfileRepository->update(['run_status' => '0'], request()->input('data_flow_profile_id'));
+        $this->dataFlowProfileRepository->update(['run_status' => '1'], request()->input('data_flow_profile_id'));
 
         if ($dataFlowProfileRecord) {
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];

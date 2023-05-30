@@ -111,7 +111,6 @@ class BundledProductRepository extends Repository
 
             return $dataToBeReturn;
         } catch(\Exception $e) {
-            dd($e);
             $categoryError = explode('[' ,$e->getMessage());
             $categorySlugError = explode(']' ,$e->getMessage());
             $requestData['countOfStartedProfiles'] =  $i + 1;

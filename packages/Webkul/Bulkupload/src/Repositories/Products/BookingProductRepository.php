@@ -359,7 +359,6 @@ class BookingProductRepository extends Repository
                 $this->productImageRepository->bulkuploadImages($data, $bookingProductData, $imageZipName = null);
             }
         } catch(\Exception $e) {
-            dd($e);
             Log::error('booking product store function '. $e->getMessage());
         }
     }

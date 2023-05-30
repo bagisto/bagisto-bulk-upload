@@ -7,7 +7,7 @@
 @section('content')
     <!-- Import New products -->
     <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.add-profile') }}'" :active="true" >
-         <div slot="body">
+        <div slot="body">
             <div class="page-content">
                 <div class="import-new-products pt-10">
                 
@@ -69,7 +69,7 @@
     </accordian>
 
     <!-- Datagrid of dataflow profile. -->
-    <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.grid') }}'" :active="false" >
+    <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.grid') }}'" :active="true">
         <div slot="body">
             <div class="page-content">
                 <datagrid-plus src="{{ route('admin.dataflow-profile.index') }}"></datagrid-plus>

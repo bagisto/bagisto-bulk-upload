@@ -236,7 +236,7 @@
                     </option>
                 @endforeach
             </select>
-            <span class="control-info mt-10" v-if="showwarn">@{{msg}}</span>
+            <span class="control-info mt-10" v-if="showwarn"><b>@{{ msg }}</b></span>
             <span class="control-error" v-if="errors.has('download_sample')" v-text="errors.first('download_sample')"></span>
 
 
