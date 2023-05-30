@@ -27,7 +27,7 @@ class BulkUploadServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../Resources/views/admin/bulk-upload/layouts/nav-aside.blade.php' => resource_path('views/vendor/admin/layouts/nav-left.blade.php'),
         ]);
-        
+    
         Event::listen('bagisto.admin.layout.head', function($viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('bulkupload::admin.layouts.style');
         });
