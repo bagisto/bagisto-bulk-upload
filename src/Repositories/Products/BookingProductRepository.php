@@ -4,6 +4,7 @@ namespace Webkul\Bulkupload\Repositories\Products;
 
 use Storage;
 use Webkul\Core\Eloquent\Repository;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Container\Container as App;
 use Webkul\Admin\Imports\DataGridImport;
 use Illuminate\Support\Facades\Validator;
@@ -267,8 +268,13 @@ class BookingProductRepository extends Repository
                 $data['type'] = $csvData['type'];
                 $data['attribute_family_id'] = $attributeFamilyData->id;
                 $data['sku'] = $csvData['sku'];
-
+                
+                Event::dispatch('catalog.product.create.before');
+                
                 $bookingProductData = $this->productRepository->create($data);
+                
+                Event::dispatch('catalog.product.create.after', $bookingProductData);
+                
             } else {
                 $bookingProductData = $productData;
             }
@@ -414,7 +420,11 @@ class BookingProductRepository extends Repository
 
             request()->request->add(['booking' => $booking]);
 
-            $this->productRepository->update($data, $bookingProductData->id);
+            Event::dispatch('catalog.product.update.before');
+
+            $product = $this->productRepository->update($data, $bookingProductData->id);
+            
+            Event::dispatch('catalog.product.update.after', $product);
 
             if (isset($imageZipName)) {
                 $this->productImageRepository->bulkuploadImages($data, $bookingProductData, $imageZipName);
