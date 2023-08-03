@@ -4,44 +4,13 @@ namespace Webkul\Bulkupload\Repositories;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Event;
-use Webkul\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
+use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Models\ProductAttributeValue;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Product\Repositories\ProductAttributeValueRepository;
-use Webkul\Product\Repositories\ProductInventoryRepository;
-use Webkul\Product\Repositories\ProductImageRepository;
+use Webkul\Product\Repositories\{ProductRepository, ProductAttributeValueRepository, ProductInventoryRepository, ProductImageRepository};
 
 class BulkProductRepository extends Repository
 {
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * ProductAttributeValueRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductAttributeValueRepository
-     */
-    protected $productAttributeValueRepository;
-
-    /**
-     * ProductInventoryRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductInventoryRepository
-     */
-    protected $productInventoryRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
     /**
      * Create a new repository instance.
      *
@@ -52,19 +21,12 @@ class BulkProductRepository extends Repository
      * @return void
      */
     public function __construct(
-        ProductRepository $productRepository,
-        ProductAttributeValueRepository $productAttributeValueRepository,
-        ProductInventoryRepository $productInventoryRepository,
-        ProductImageRepository $productImageRepository,
+        protected ProductRepository $productRepository,
+        protected ProductAttributeValueRepository $productAttributeValueRepository,
+        protected ProductInventoryRepository $productInventoryRepository,
+        protected ProductImageRepository $productImageRepository,
         App $app)
     {
-        $this->productAttributeValueRepository = $productAttributeValueRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productInventoryRepository = $productInventoryRepository;
-
-        $this->productImageRepository = $productImageRepository;
 
         parent::__construct($app);
     }

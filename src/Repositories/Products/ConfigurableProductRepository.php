@@ -2,151 +2,48 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Container\Container as App;
+use Illuminate\Support\Facades\{DB, Event, Schema, Storage, Validator};
 use Webkul\Admin\Imports\DataGridImport;
-use Illuminate\Support\Facades\Schema;
-use Webkul\Category\Repositories\CategoryRepository;
-use Webkul\Product\Models\ProductAttributeValue;
 use Webkul\Core\Eloquent\Repository;
-use Illuminate\Support\Facades\Event;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Attribute\Repositories\AttributeRepository;
-use Webkul\Attribute\Repositories\AttributeFamilyRepository;
+use Webkul\Attribute\Repositories\{AttributeRepository, AttributeOptionRepository, AttributeFamilyRepository};
+use Webkul\Category\Repositories\CategoryRepository;
+use Webkul\Product\Repositories\{ProductRepository, ProductAttributeValue, ProductFlatRepository, ProductInventoryRepository};
+use Webkul\Bulkupload\Repositories\{BulkProductRepository, ImportProductRepository, ProductImageRepository};
 use Webkul\Bulkupload\Repositories\Products\HelperRepository;
-use Illuminate\Support\Facades\Validator;
-use Webkul\Product\Repositories\ProductInventoryRepository;
-use Webkul\Bulkupload\Repositories\ProductImageRepository;
-use Webkul\Attribute\Repositories\AttributeOptionRepository;
-use Webkul\Bulkupload\Repositories\BulkProductRepository;
 
 class ConfigurableProductRepository extends Repository
 {
     /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     */
-    protected $importProductRepository;
-
-    /**
-     * CategoryRepository object
-     *
-     * @var \Webkul\Category\Repositories\CategoryRepository
-     */
-    protected $categoryRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * ProductInventoryRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductInventoryRepository
-     */
-    protected $productInventoryRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * HelperRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\HelperRepository
-     */
-    protected $helperRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
-    /**
-     * BulkProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\BulkProductRepository
-     */
-    protected $bulkProductRepository;
-
-    /**
-     * AttributeOptionRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeOptionRepository
-     */
-    protected $attributeOptionRepository;
-
-    /**
      * Create a new repository instance.
      *
-     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
-     * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
-     * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
-     * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
-     * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
      * @param  \Webkul\Attribute\Repositories\AttributeRepository $attributeRepository
-     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
-     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
-     * @param  \Webkul\Bulkupload\Repositories\BulkProductRepository $bulkProductRepository
+     * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
      * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
+     * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
+     * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
+     * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
      * @param  \Webkul\Product\Repositories\ProductInventoryRepository  $productInventoryRepository
+     * @param  \Webkul\Bulkupload\Repositories\BulkProductRepository $bulkProductRepository
+     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
+     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
+     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
      *
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        CategoryRepository $categoryRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository,
-        AttributeFamilyRepository $attributeFamilyRepository,
-        AttributeRepository $attributeRepository,
-        HelperRepository $helperRepository,
-        ProductImageRepository $productImageRepository,
-        BulkProductRepository $bulkProductRepository,
-        AttributeOptionRepository $attributeOptionRepository,
-        ProductInventoryRepository $productInventoryRepository
+        protected AttributeRepository $attributeRepository,
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected AttributeOptionRepository $attributeOptionRepository,
+        protected CategoryRepository $categoryRepository,
+        protected ProductRepository $productRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductInventoryRepository $productInventoryRepository,
+        protected BulkProductRepository $bulkProductRepository,
+        protected ImportProductRepository $importProductRepository,
+        protected ProductImageRepository $productImageRepository,
+        protected HelperRepository $helperRepository,
     )
     {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->categoryRepository = $categoryRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productImageRepository = $productImageRepository;
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->attributeRepository = $attributeRepository;
-
-        $this->productInventoryRepository = $productInventoryRepository;
-
-        $this->helperRepository = $helperRepository;
-
-        $this->bulkProductRepository = $bulkProductRepository;
-
-        $this->attributeOptionRepository = $attributeOptionRepository;
     }
 
     /*

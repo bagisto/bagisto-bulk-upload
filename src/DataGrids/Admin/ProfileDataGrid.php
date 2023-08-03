@@ -43,7 +43,7 @@ class ProfileDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'name',
-            'label'      => trans('admin::app.catalog.products.familiy'),
+            'label'      => trans('admin::app.catalog.products.family'),
             'type'       => 'string',
             'searchable' => true,
             'sortable'   => true,
@@ -72,24 +72,19 @@ class ProfileDataGrid extends DataGrid
     public function prepareActions()
     {
         $this->addAction([
-            'type'   => 'Edit',
+            'title'  => trans('admin::app.datagrid.edit'),
             'method' => 'GET',
             'route'  => 'bulkupload.admin.profile.edit',
             'icon'   => 'icon pencil-lg-icon',
-            'title'  => ''
-
         ]);
 
         $this->addAction([
-            'type'          => trans('admin::app.datagrid.delete'),
-            'method'        => 'POST',
-            'route'         => 'bulkupload.admin.profile.delete',
-            'confirm_text'  => trans('ui::app.datagrid.massaction.delete'),
-            'icon'          => 'icon trash-icon',
-            'title'         => ''
+            'title'        => trans('admin::app.datagrid.delete'),
+            'method'       => 'POST',
+            'route'        => 'bulkupload.admin.profile.delete',
+            'confirm_text' => trans('ui::app.datagrid.mass-action.delete', ['resource' => 'address']),
+            'icon'         => 'icon trash-icon',
         ]);
-
-        $this->enableAction = true;
     }
 
     public function prepareMassActions()

@@ -3,132 +3,45 @@
 namespace Webkul\Bulkupload\Repositories\Products;
 
 use Storage;
-use Illuminate\Container\Container as App;
-use Illuminate\Support\Facades\Log;
-use Webkul\Core\Eloquent\Repository;
+use Illuminate\Support\Facades\{Event, Log, Validator};
 use Webkul\Admin\Imports\DataGridImport;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Event;
-use Webkul\Category\Repositories\CategoryRepository;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
-use Webkul\Inventory\Repositories\InventorySourceRepository;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\Products\HelperRepository;
-use Webkul\Attribute\Repositories\AttributeOptionRepository;
-use Webkul\Bulkupload\Repositories\ProductImageRepository;
+use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
+use Webkul\Attribute\Repositories\{AttributeFamilyRepository, AttributeOptionRepository};
+use Webkul\Category\Repositories\CategoryRepository;
+use Webkul\Product\Repositories\{ProductRepository, ProductFlatRepository};
+use Webkul\Inventory\Repositories\InventorySourceRepository;
+use Webkul\Bulkupload\Repositories\Products\{HelperRepository, ImportProductRepository, ProductImageRepository};
 
 class VirtualProductRepository extends Repository
 {
     /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     */
-    protected $importProductRepository;
-
-    /**
-     * CategoryRepository object
-     *
-     * @var \Webkul\Category\Repositories\CategoryRepository
-     */
-    protected $categoryRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * HelperRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\HelperRepository
-     */
-    protected $helperRepository;
-
-    /**
-     * ProductImageRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ProductImageRepository
-     */
-    protected $productImageRepository;
-
-    /**
-     * AttributeOptionRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeOptionRepository
-     */
-    protected $attributeOptionRepository;
-
-    /**
-     * InventorySourceRepository object
-     *
-     * @var \Webkul\Inventory\Repositories\InventorySourceRepository
-     */
-    protected $inventorySourceRepository;
-
-    /**
      * Create a new repository instance.
      *
-     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
-     * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
-     * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
-     * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
      * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
-     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
-     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
      * @param  \Webkul\Attribute\Repositories\AttributeOptionRepository  $attributeOptionRepository
+     * @param  \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
+     * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
+     * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
      * @param  \Webkul\Inventory\Repositories\InventorySourceRepository  $inventorySourceRepository
+     * @param  \Webkul\Bulkupload\Repositories\Products\HelperRepository  $helperRepository
+     * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
+     * @param  \Webkul\Bulkupload\Repositories\ProductImageRepository  $productImageRepository
      *
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        CategoryRepository $categoryRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository,
-        AttributeFamilyRepository $attributeFamilyRepository,
-        HelperRepository $helperRepository,
-        ProductImageRepository $productImageRepository,
-        AttributeOptionRepository $attributeOptionRepository,
-        InventorySourceRepository $inventorySourceRepository
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected AttributeOptionRepository $attributeOptionRepository,
+        protected CategoryRepository $categoryRepository,
+        protected ProductRepository $productRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected InventorySourceRepository $inventorySourceRepository,
+        protected HelperRepository $helperRepository,
+        protected ImportProductRepository $importProductRepository,
+        protected ProductImageRepository $productImageRepository
     )
     {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->categoryRepository = $categoryRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
-
-        $this->productImageRepository = $productImageRepository;
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->helperRepository = $helperRepository;
-
-        $this->attributeOptionRepository = $attributeOptionRepository;
-
-        $this->inventorySourceRepository = $inventorySourceRepository;
     }
 
     /*

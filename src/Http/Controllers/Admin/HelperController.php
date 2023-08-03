@@ -3,104 +3,22 @@
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
 use Webkul\Admin\Imports\DataGridImport;
-use Maatwebsite\Excel\Validators\Failure;
-use Webkul\Bulkupload\Helpers\ImportProduct;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Bulkupload\Repositories\DataFlowProfileRepository;
+use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
 use Webkul\Bulkupload\Repositories\Products\SimpleProductRepository;
 use Webkul\Bulkupload\Repositories\Products\ConfigurableProductRepository;
 use Webkul\Bulkupload\Repositories\Products\VirtualProductRepository;
 use Webkul\Bulkupload\Repositories\Products\DownloadableProductRepository;
-use Webkul\Bulkupload\Repositories\Products\GroupedProductRepository;
 use Webkul\Bulkupload\Repositories\Products\BundledProductRepository;
 use Webkul\Bulkupload\Repositories\Products\BookingProductRepository;
+use Webkul\Bulkupload\Repositories\Products\GroupedProductRepository;
+use Webkul\Bulkupload\Helpers\ImportProduct;
 
 class HelperController extends Controller
 {
-
-    /**
-     * SimpleProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\SimpleProductRepository
-     *
-     */
-    protected $simpleProductRepository;
-
-    /**
-     * ConfigurableProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\ConfigurableProductRepository
-     *
-     */
-    protected $configurableProductRepository;
-
-    /**
-     * VirtualProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\VirtualProductRepository;
-     *
-     */
-    protected $virtualProductRepository;
-
-    /**
-     * DownloadableProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\DownloadableProductRepository
-     *
-     */
-    protected $downloadableProductRepository;
-
-    /**
-     * BundledProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\BundledProductRepository
-     *
-     */
-    protected $bundledProductRepository;
-
-    /**
-     * BookingProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\BookingProductRepository
-     *
-     */
-    protected $bookingProductRepository;
-
-    /**
-     * GroupedProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\Products\GroupedProductRepository
-     *
-     */
-    protected $groupedProductRepository;
-
-    /**
-     * DataFlowProfileRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\DataFlowProfileRepository
-     *
-     */
-    protected $dataFlowProfileRepository;
-
-    /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     *
-     */
-    protected $importProductRepository;
-
     /**
      * @var array
      */
     protected $product = [];
-
-    /**
-     * ImportProduct helper
-     *
-     * @var \Webkul\Bulkupload\Helpers\ImportProduct
-     */
-    protected $importProduct;
 
     /**
      * Create a new controller instance.
@@ -119,37 +37,18 @@ class HelperController extends Controller
      * @return void
      */
     public function __construct(
-        ImportProductRepository $importProductRepository,
-        DataFlowProfileRepository $dataFlowProfileRepository,
-        SimpleProductRepository $simpleProductRepository,
-        ConfigurableProductRepository $configurableProductRepository,
-        VirtualProductRepository $virtualProductRepository,
-        DownloadableProductRepository $downloadableProductRepository,
-        BundledProductRepository $bundledProductRepository,
-        BookingProductRepository $bookingProductRepository,
-        GroupedProductRepository $groupedProductRepository,
-        ImportProduct $importProduct
+        protected ImportProductRepository $importProductRepository,
+        protected DataFlowProfileRepository $dataFlowProfileRepository,
+        protected SimpleProductRepository $simpleProductRepository,
+        protected ConfigurableProductRepository $configurableProductRepository,
+        protected VirtualProductRepository $virtualProductRepository,
+        protected DownloadableProductRepository $downloadableProductRepository,
+        protected BundledProductRepository $bundledProductRepository,
+        protected BookingProductRepository $bookingProductRepository,
+        protected GroupedProductRepository $groupedProductRepository,
+        protected ImportProduct $importProduct
     )
     {
-        $this->importProductRepository = $importProductRepository;
-
-        $this->dataFlowProfileRepository = $dataFlowProfileRepository;
-
-        $this->simpleProductRepository = $simpleProductRepository;
-
-        $this->configurableProductRepository = $configurableProductRepository;
-
-        $this->virtualProductRepository = $virtualProductRepository;
-
-        $this->downloadableProductRepository = $downloadableProductRepository;
-
-        $this->bundledProductRepository = $bundledProductRepository;
-
-        $this->bookingProductRepository = $bookingProductRepository;
-
-        $this->groupedProductRepository = $groupedProductRepository;
-
-        $this->importProduct = $importProduct;
     }
 
     /**
@@ -187,7 +86,7 @@ class HelperController extends Controller
      */
     public function getAllDataFlowProfiles()
     {
-        $attribute_family_id = request()->attribute_family_id;
+        // $attribute_family_id = request()->attribute_family_id;
 
         $dataFlowProfiles = $this->dataFlowProfileRepository->findByField('attribute_family_id', request()->attribute_family_id);
 

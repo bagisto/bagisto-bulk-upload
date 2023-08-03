@@ -3,35 +3,11 @@
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
-use Webkul\Bulkupload\Repositories\ImportProductRepository;
-use Webkul\Bulkupload\Repositories\DataFlowProfileRepository;
+use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
+use Webkul\Bulkupload\DataGrids\Admin\ProfileDataGrid;
 
 class BulkUploadController extends Controller
 {
-    /**
-     * DataFlowProfileRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\DataFlowProfileRepository
-     *
-     */
-     protected $dataFlowProfileRepository;
-
-    /**
-     * AttributeFamilyRepository object
-     *
-     * @var \Webkul\Attribute\Repositories\AttributeFamilyRepository
-     *
-     */
-    protected $attributeFamilyRepository;
-
-    /**
-     * ImportProductRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\ImportProductRepository
-     *
-     */
-    protected $importProductRepository;
-
     /**
      * @var array
      */
@@ -44,29 +20,22 @@ class BulkUploadController extends Controller
      */
     protected $_config;
 
-
     /**
      * Create a new controller instance.
      *
      * @param  \Webkul\Attribute\Repositories\AttributeFamilyRepository  $attributeFamilyRepository
-     * @param  \Webkul\Bulkupload\Repositories\DataFlowProfileRepository  $dataFlowProfileRepository
      * @param  \Webkul\Bulkupload\Repositories\ImportProductRepository  $importProductRepository
+     * @param  \Webkul\Bulkupload\Repositories\DataFlowProfileRepository  $dataFlowProfileRepository
      *
      * @return void
      */
     public function __construct(
-        AttributeFamilyRepository $attributeFamilyRepository,
-        DataFlowProfileRepository $dataFlowProfileRepository,
-        ImportProductRepository $importProductRepository
+        protected AttributeFamilyRepository $attributeFamilyRepository,
+        protected ImportProductRepository $importProductRepository,
+        protected DataFlowProfileRepository $dataFlowProfileRepository
     )
     {
         $this->_config = request('_config');
-
-        $this->attributeFamilyRepository = $attributeFamilyRepository;
-
-        $this->importProductRepository = $importProductRepository;
-
-        $this->dataFlowProfileRepository = $dataFlowProfileRepository;
     }
 
     /**
@@ -76,21 +45,13 @@ class BulkUploadController extends Controller
      */
     public function index()
     {
-        $profiles = null;
-        $families = $this->attributeFamilyRepository->all();
-        $allProfiles = $this->importProductRepository->get()->toArray();
-
-        if (! empty($allProfiles)) {
-            foreach ($allProfiles as $allProfile) {
-                $profilers[] = $allProfile['data_flow_profile_id'];
-            }
-
-            foreach ($profilers as $key => $profiler) {
-                $profiles[] = $this->dataFlowProfileRepository->findByfield(['id' => $profilers[$key], 'run_status' => '0']);
-            }
+        if (request()->ajax()) {
+            return app(ProfileDataGrid::class)->toJson();
         }
 
-        return view($this->_config['view'], compact('families', 'profiles'));
+        $families = $this->attributeFamilyRepository->all();
+
+        return view($this->_config['view'], compact('families'));
     }
 
     /**
@@ -101,17 +62,14 @@ class BulkUploadController extends Controller
     public function store()
     {
         request()->validate([
-            'name' => 'required|unique:bulkupload_data_flow_profiles',
-            'attribute_family' => 'required',
-            'locale_code' => 'required'
+            'name'                => 'required|unique:bulkupload_data_flow_profiles',
+            'attribute_family_id' => 'required',
+            'locale_code'         => 'required'
         ]);
 
-        $dataFlowProfileAdmin['name'] = request()->name;
-        $dataFlowProfileAdmin['attribute_family_id'] = request()->attribute_family;
-        $dataFlowProfileAdmin['locale_code'] = request()->locale_code;
+        $data = request()->all();
 
-
-        $this->dataFlowProfileRepository->create($dataFlowProfileAdmin);
+        $this->dataFlowProfileRepository->create($data);
 
         session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-saved'));
 
@@ -127,6 +85,7 @@ class BulkUploadController extends Controller
     public function edit($id)
     {
         $families = $this->attributeFamilyRepository->all();
+
         $profiles = $this->dataFlowProfileRepository->findOrFail($id);
 
         return view($this->_config['view'], compact('families', 'profiles'));
@@ -140,9 +99,7 @@ class BulkUploadController extends Controller
      */
     public function update($id)
     {
-        $product = $this->dataFlowProfileRepository->update(request()->except('_token'), $id);
-        $families = $this->attributeFamilyRepository->all();
-        $profiles = $this->dataFlowProfileRepository->findOrFail($id);
+        $this->dataFlowProfileRepository->update(request()->except('_token'), $id);
 
         session()->flash('success', trans('admin::app.response.update-success', ['name' => 'Product']));
 
@@ -157,11 +114,9 @@ class BulkUploadController extends Controller
      */
     public function destroy($id)
     {
-        $product = $this->dataFlowProfileRepository->findOrFail($id)->delete();
+        $this->dataFlowProfileRepository->findOrFail($id)->delete();
 
-        session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-deleted'));
-
-        return response()->json(['message' => true], 200);
+        return response()->json(['message' => trans('bulkupload::app.admin.bulk-upload.messages.profile-deleted')], 200);
     }
 
     /**
@@ -181,7 +136,7 @@ class BulkUploadController extends Controller
             }
         }
 
-        session()->flash('success', trans('admin::app.catalog.products.mass-delete-success'));
+        session()->flash('success', trans('bulkupload::app.admin.bulk-upload.messages.all-profile-deleted'));
 
         return redirect()->route($this->_config['redirect']);
     }

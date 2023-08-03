@@ -2,68 +2,30 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Illuminate\Container\Container as App;
-use Webkul\Core\Eloquent\Repository;
 use Illuminate\Support\Facades\Validator;
+use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Models\ProductAttributeValue;
-use Webkul\Product\Repositories\ProductRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
+use Webkul\Product\Repositories\{ProductRepository, ProductFlatRepository, ProductAttributeValueRepository};
 use Webkul\Bulkupload\Repositories\DataFlowProfileRepository;
-use Webkul\Product\Repositories\ProductAttributeValueRepository;
 
 class HelperRepository extends Repository
 {
     /**
-     * DataFlowProfileRepository object
-     *
-     * @var \Webkul\Bulkupload\Repositories\DataFlowProfileRepository
-     */
-    protected $dataFlowProfileRepository;
-
-    /**
-     * ProductFlatRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductFlatRepository
-     */
-    protected $productFlatRepository;
-
-    /**
-     * ProductRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * ProductAttributeValueRepository object
-     *
-     * @var \Webkul\Product\Repositories\ProductAttributeValueRepository
-     */
-    protected $productAttributeValueRepository;
-
-    /**
      * Create a new repository instance.
      *
-     * @param  \Webkul\Bulkupload\Repositories\DataFlowProfileRepository  $dataFlowProfileRepository
-     * @param  \Webkul\Product\Repositories\ProductAttributeValueRepository  $productAttributeValueRepository
-     * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
      * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
+     * @param  \Webkul\Product\Repositories\ProductFlatRepository  $productFlatRepository
+     * @param  \Webkul\Product\Repositories\ProductAttributeValueRepository  $productAttributeValueRepository
+     * @param  \Webkul\Bulkupload\Repositories\DataFlowProfileRepository  $dataFlowProfileRepository
      * @return void
      */
     public function __construct(
-        DataFlowProfileRepository $dataFlowProfileRepository,
-        ProductAttributeValueRepository $productAttributeValueRepository,
-        ProductFlatRepository $productFlatRepository,
-        ProductRepository $productRepository
+        protected ProductRepository $productRepository,
+        protected ProductFlatRepository $productFlatRepository,
+        protected ProductAttributeValueRepository $productAttributeValueRepository,
+        protected DataFlowProfileRepository $dataFlowProfileRepository
     )
     {
-        $this->dataFlowProfileRepository = $dataFlowProfileRepository;
-
-        $this->productAttributeValueRepository = $productAttributeValueRepository;
-
-        $this->productFlatRepository = $productFlatRepository;
-
-        $this->productRepository = $productRepository;
     }
 
     /**

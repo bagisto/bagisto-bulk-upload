@@ -61,6 +61,7 @@ return [
             'messages' => [
                 'profile-saved' => 'Profile added successfully',
                 'profile-deleted' => 'Profile deleted successfully',
+                'all-profile-deleted' => 'All the selected profiles have been deleted successfully',
                 'file-format-error' => 'Invalid File Extension',
                 'update-profile' => 'Profile updated successfully',
                 'data-profile-not-selected' => 'Data Flow Profile not selected',

@@ -1,20 +1,19 @@
 @extends('admin::layouts.content')
 
 @section('page_title')
-{{ __('bulkupload::app.admin.bulk-upload.bulk-upload-dataflow-profile') }}
+    {{ __('bulkupload::app.admin.bulk-upload.bulk-upload-dataflow-profile') }}
 @endsection
 
 @section('content')
     <div class="account-content">
         <div class="account-layout">
-                <!-- Import New products -->
             <div class="import-new-products mt-45">
                 <div class="heading">
                     <h1>{{ __('bulkupload::app.admin.bulk-upload.data-flow-profile.edit-profile') }}</h1>
                 </div>
 
                 <form method="POST" action="{{ route('admin.bulk-upload.dataflow.update-profile',$profiles->id) }}">
-                        @csrf
+                    @csrf
                     <?php $familyId = app('request')->input('family') ?>
 
                     <div class="control-group">
@@ -23,7 +22,7 @@
                     </div>
 
                     <div class="control-group" :class="[errors.has('attribute_family_id') ? 'has-error' : '']">
-                        <label for="attribute_family_id" class="required">{{ __('admin::app.catalog.products.familiy') }}</label>
+                        <label for="attribute_family_id" class="required">{{ __('admin::app.catalog.products.family') }}</label>
 
                         <select class="control" value="" id="attribute_family_id" name="attribute_family_id" {{ $familyId ? 'disabled' : '' }}>
                             @foreach ($families as $family)
