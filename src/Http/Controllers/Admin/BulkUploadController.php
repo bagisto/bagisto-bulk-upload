@@ -4,7 +4,6 @@ namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
 use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
-use Webkul\Bulkupload\DataGrids\Admin\ProfileDataGrid;
 
 class BulkUploadController extends Controller
 {
@@ -45,99 +44,39 @@ class BulkUploadController extends Controller
      */
     public function index()
     {
-        if (request()->ajax()) {
-            return app(ProfileDataGrid::class)->toJson();
-        }
-
         $families = $this->attributeFamilyRepository->all();
 
         return view($this->_config['view'], compact('families'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Get profiles on basis of attribute family
      *
-     * @return \Illuminate\Http\Response
+     * @return array
      */
-    public function store()
+    public function getAllDataFlowProfiles()
     {
-        request()->validate([
-            'name'                => 'required|unique:bulkupload_data_flow_profiles',
-            'attribute_family_id' => 'required',
-            'locale_code'         => 'required'
-        ]);
+        $dataFlowProfiles = $this->dataFlowProfileRepository->findByField('attribute_family_id', request()->attribute_family_id);
 
-        $data = request()->all();
-
-        $this->dataFlowProfileRepository->create($data);
-
-        session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-saved'));
-
-        return redirect()->route('admin.dataflow-profile.index');
+        return ['dataFlowProfiles' => $dataFlowProfiles];
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\View\View
-     */
-    public function edit($id)
+    public function getProfiler()
     {
-        $families = $this->attributeFamilyRepository->all();
+        $profiles = null;
+        $allProfiles = $this->importProductRepository->get()->toArray();
 
-        $profiles = $this->dataFlowProfileRepository->findOrFail($id);
+        if (! empty($allProfiles)) {
+            foreach ($allProfiles as $allProfile) {
+                $profilers[] = $allProfile['data_flow_profile_id'];
+            }
 
-        return view($this->_config['view'], compact('families', 'profiles'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update($id)
-    {
-        $this->dataFlowProfileRepository->update(request()->except('_token'), $id);
-
-        session()->flash('success', trans('admin::app.response.update-success', ['name' => 'Product']));
-
-        return redirect()->route('admin.dataflow-profile.index');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $this->dataFlowProfileRepository->findOrFail($id)->delete();
-
-        return response()->json(['message' => trans('bulkupload::app.admin.bulk-upload.messages.profile-deleted')], 200);
-    }
-
-    /**
-     * Mass Delete the dataflowprofiles
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function massDestroy()
-    {
-        $profileIds = explode(',', request()->input('indexes'));
-
-        foreach ($profileIds as $profileId) {
-            $profile = $this->dataFlowProfileRepository->find($profileId);
-
-            if (isset($profile)) {
-                $this->dataFlowProfileRepository->delete($profileId);
+            foreach ($profilers as $key => $profiler) {
+                $profiles[] = $this->dataFlowProfileRepository->findByfield(['id' => $profilers[$key], 'run_status' => '0']);
             }
         }
 
-        session()->flash('success', trans('bulkupload::app.admin.bulk-upload.messages.all-profile-deleted'));
+        return view($this->_config['view'], compact('profiles'));
 
-        return redirect()->route($this->_config['redirect']);
     }
 }

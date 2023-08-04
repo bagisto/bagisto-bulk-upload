@@ -29,22 +29,20 @@ class ImportProduct
     public function store()
     {
         request()->validate ([
-            'attribute_family'  => 'required',
-            'file_path'         => 'required',
-            'image_path'        => 'mimetypes:application/zip|max:10000',
-            'data_flow_profile' => 'required',
+            'attribute_family_id'  => 'required',
+            'file_path'            => 'required',
+            'image_path'           => 'mimetypes:application/zip|max:10000',
+            'data_flow_profile'    => 'required',
         ]);
+
+        $data = request()->all();
 
         $valid_extension = ['csv', 'xls', 'xlsx'];
         $valid_image_extension = ['zip', 'rar'];
 
-        $imageDir = 'imported-products/admin/images';
-        $fileDir = 'imported-products/admin/files';
-        $linkFilesDir = 'imported-products/admin/link-files';
-        $linkSampleFilesDir = 'imported-products/admin/link-sample-files';
-        $sampleFileDir = 'imported-products/admin/sample-file';
+        $fileStorePath = 'imported-products/admin/';
 
-        $attribute_family_id = request()->attribute_family;
+        $attribute_family_id = request()->attribute_family_id;
         $data_flow_profile_id = request()->data_flow_profile;
 
         $image = request()->file('image_path');
@@ -61,7 +59,7 @@ class ImportProduct
             $product['is_downloadable'] = 1;
 
             if (! empty($linkFiles) && in_array($linkFiles->getClientOriginalExtension(), $valid_image_extension)) {
-                $uploadedLinkFiles = $linkFiles->storeAs($linkFilesDir, uniqid().'.'.$linkFiles->getClientOriginalExtension());
+                $uploadedLinkFiles = $linkFiles->storeAs($fileStorePath .'link-files', uniqid().'.'.$linkFiles->getClientOriginalExtension());
 
                 $product['upload_link_files'] = $uploadedLinkFiles;
             } else {
@@ -74,7 +72,7 @@ class ImportProduct
                 $product['is_links_have_samples'] = 1;
 
                 if (in_array($linkSampleFiles->getClientOriginalExtension(), $valid_image_extension)) {
-                    $uploadedLinkSampleFiles = $linkSampleFiles->storeAs($linkSampleFilesDir, uniqid().'.'.$linkSampleFiles->getClientOriginalExtension());
+                    $uploadedLinkSampleFiles = $linkSampleFiles->storeAs($fileStorePath .'link-sample-files', uniqid().'.'.$linkSampleFiles->getClientOriginalExtension());
 
                     $product['upload_link_sample_files'] = $uploadedLinkSampleFiles;
                 } else {
@@ -88,7 +86,7 @@ class ImportProduct
                 $product['is_samples_available'] = 1;
 
                 if (in_array($sampleFile->getClientOriginalExtension(), $valid_image_extension)) {
-                    $uploadedSampleFiles = $sampleFile->storeAs($sampleFileDir, uniqid().'.'.$sampleFile->getClientOriginalExtension());
+                    $uploadedSampleFiles = $sampleFile->storeAs($fileStorePath .'sample-file', uniqid().'.'.$sampleFile->getClientOriginalExtension());
 
                     $product['upload_sample_files'] = $uploadedSampleFiles;
                 } else {
@@ -103,17 +101,17 @@ class ImportProduct
         $product['attribute_family_id'] = $attribute_family_id;
 
         if ((! empty($image) && in_array($image->getClientOriginalExtension(), $valid_image_extension)) && (in_array($file->getClientOriginalExtension(), $valid_extension))) {
-            $uploadedImage = $image->storeAs($imageDir, uniqid().'.'.$image->getClientOriginalExtension());
+            $uploadedImage = $image->storeAs($fileStorePath .'images', uniqid().'.'.$image->getClientOriginalExtension());
 
             $product['image_path'] = $uploadedImage;
 
-            $uploadedFile = $file->storeAs($fileDir, uniqid().'.'.$file->getClientOriginalExtension());
+            $uploadedFile = $file->storeAs($fileStorePath .'files', uniqid().'.'.$file->getClientOriginalExtension());
 
             $product['file_path'] = $uploadedFile;
         } else if ( empty($image) && (in_array($file->getClientOriginalExtension(), $valid_extension))) {
             $product['image_path'] = '';
 
-            $uploadedFile = $file->storeAs($fileDir, uniqid().'.'.$file->getClientOriginalExtension());
+            $uploadedFile = $file->storeAs($fileStorePath .'files', uniqid().'.'.$file->getClientOriginalExtension());
 
             $product['file_path'] = $uploadedFile;
         } else {
@@ -133,7 +131,7 @@ class ImportProduct
 
             return redirect()->route('admin.bulk-upload.index');
         } else {
-            $importNewProductsStore = $this->importProductRepository->create($product);
+            $this->importProductRepository->create($product);
 
             session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.profile-saved'));
 

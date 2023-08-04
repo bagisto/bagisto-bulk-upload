@@ -11,7 +11,8 @@ use Webkul\Attribute\Repositories\{AttributeFamilyRepository, AttributeOptionRep
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Product\Repositories\{ProductRepository, ProductFlatRepository};
 use Webkul\Inventory\Repositories\InventorySourceRepository;
-use Webkul\Bulkupload\Repositories\Products\{HelperRepository, ImportProductRepository, ProductImageRepository};
+use Webkul\Bulkupload\Repositories\{ImportProductRepository, ProductImageRepository};
+use Webkul\Bulkupload\Repositories\Products\HelperRepository;
 
 class VirtualProductRepository extends Repository
 {

@@ -11,16 +11,20 @@
         <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.upload-files.download-sample') }}'" :active="true">
             <div slot="body">
                 <div class="import-product">
-                    <form action="{{ route('download-sample-files') }}" method="post">
+                    <form
+                        action="{{ route('download-sample-files') }}"
+                        method="post"
+                    >
                         <div class="account-table-content">
                             @csrf
-                            <div class="control-group">
+
+                            <div class="control-group" :class="[errors.has('download_sample') ? 'has-error' : '' ]">
                                 <select class="control" id="download-sample" name="download_sample">
                                     <option value="">
                                         {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
                                     </option>
 
-                                    @foreach($productTypes as $key => $productType)
+                                    @foreach(config('product_types') as $key => $productType)
                                         <option value="{{ $key }}-csv">
                                             {{ __('bulkupload::app.admin.bulk-upload.upload-files.csv-file', ['filetype' => ucwords($key) ]) }}
                                         </option>
@@ -31,11 +35,13 @@
                                     @endforeach
                                 </select>
 
-                                <div class="mt-10">
-                                    <button type="submit" class="btn btn-lg btn-primary">
-                                        {{ __('bulkupload::app.admin.bulk-upload.upload-files.download') }}
-                                    </button>
-                                </div>
+                                <span class="control-error" v-if="errors.has('download_sample')">@{{ errors.first('download_sample') }}</span>
+                            </div>
+
+                            <div class="mt-10">
+                                <button type="submit" class="btn btn-lg btn-primary">
+                                    {{ __('bulkupload::app.admin.bulk-upload.upload-files.download') }}
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -47,7 +53,12 @@
         <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.upload-files.import-products') }}'" :active="true">
             <div slot="body">
                 <div class="import-new-products">
-                    <form method="POST" action="{{ route('import-new-products-form-submit') }}" enctype="multipart/form-data">
+                    <form
+                        method="POST"
+                        action="{{ route('import-new-products-form-submit') }}"
+                        enctype="multipart/form-data"
+                        @submit.prevent="onSubmit"
+                    >
                         @csrf
                         <?php $familyId = app('request')->input('family') ?>
 
@@ -58,15 +69,15 @@
                             </div>
 
                             <div class="attribute-family">
-                                <attributefamily></attributefamily>
+                                <attribute-family></attribute-family>
                             </div>
 
-                            <div class="control-group {{ $errors->first('file_path') ? 'has-error' :'' }}">
+                            <div class="control-group" :class="[errors.has('file_path') ? 'has-error' : '']">
                                 <label class="required">{{ __('bulkupload::app.admin.bulk-upload.upload-files.file') }} </label>
 
                                 <input type="file" class="control" name="file_path" id="file">
 
-                                <span class="control-error">{{ $errors->first('file_path') }}</span>
+                                <span class="control-error" v-if="errors.has('file_path')">@{{ errors.first('file_path') }}</span>
                             </div>
 
                             <div class="control-group {{ $errors->first('image_path') ? 'has-error' :'' }}">
@@ -142,24 +153,24 @@
 
     <script type="text/x-template" id="attribute-family-template">
         <div>
-            <div class="control-group {{ $errors->first('attribute_family') ? 'has-error' :'' }}">
-                <label for="attribute_family" class="required">{{ __('admin::app.catalog.products.familiy') }}</label>
+            <div class="control-group {{ $errors->first('attribute_family_id') ? 'has-error' :'' }}">
+                <label for="attribute_family_id" class="required">{{ __('admin::app.catalog.products.family') }}</label>
 
-                <select @change="onChange()" v-model="key" class="control" id="attribute_family" name="attribute_family" {{ $familyId ? 'disabled' : '' }}>
+                <select @change="onChange()" v-model="key" class="control" id="attribute_family_id" name="attribute_family_id" {{ $familyId ? 'disabled' : '' }}>
                     <option value="">
                         {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
                     </option>
 
                     @foreach ($families as $family)
-                        <option value="{{ $family->id }}" {{ ($familyId == $family->id || old('attribute_family') == $family->id) ? 'selected' : '' }}>{{ $family->name }}</option>
+                        <option value="{{ $family->id }}" {{ ($familyId == $family->id || old('attribute_family_id') == $family->id) ? 'selected' : '' }}>{{ $family->name }}</option>
                     @endforeach
                 </select>
 
                 @if ($familyId)
-                    <input type="hidden" name="attribute_family" value="{{ $familyId }}"/>
+                    <input type="hidden" name="attribute_family_id" value="{{ $familyId }}"/>
                 @endif
 
-                <span class="control-error">{{ $errors->first('attribute_family') }}</span>
+                <span class="control-error">{{ $errors->first('attribute_family_id') }}</span>
             </div>
 
             <div class="control-group {{ $errors->first('data_flow_profile') ? 'has-error' :'' }}">
@@ -172,24 +183,20 @@
                     <option v-for="dataflowprofile,index in dataFlowProfiles" :value="dataflowprofile.id">@{{ dataflowprofile.name }}</option>
                 </select>
 
-            <span class="control-error">{{ $errors->first('data_flow_profile') }}</span>
+                <span class="control-error">{{ $errors->first('data_flow_profile') }}</span>
 
             </div>
         </div>
     </script>
 
     <script>
-        Vue.component('attributefamily', {
+        Vue.component('attribute-family', {
                 template: '#attribute-family-template',
                 data: function() {
                     return {
                         key: "",
-                        // seller: "",
                         dataFlowProfiles: [],
                     }
-                },
-
-                mounted: function() {
                 },
 
                 methods:{
@@ -200,7 +207,6 @@
 
                         this_this.$http.post(uri, {
                             attribute_family_id: this_this.key,
-                            // seller_id: this_this.seller,
                         })
                         .then(response => {
                             this_this.dataFlowProfiles = response.data.dataFlowProfiles;
@@ -217,7 +223,6 @@
                 data: function() {
                     return {
                         key: "",
-                        // seller: "",
                         dataFlowProfiles: [],
                         isLinkSample: false,
                         isSample: false,

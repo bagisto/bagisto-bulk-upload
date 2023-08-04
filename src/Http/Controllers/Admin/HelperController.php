@@ -58,39 +58,44 @@ class HelperController extends Controller
      */
     public function downloadFile()
     {
-        $items = [];
-
-        foreach (config('product_types') as $item) {
-            $item['children'] = [];
-
-            array_push($items, $item);
-        }
-
-        $types = core()->sortItems($items);
-
-        foreach ($types as $key => $productType) {
+        foreach (config('product_types') as $key => $productType) {
             if (request()->download_sample == $key.'-csv') {
                 return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.csv'));
             } else if (request()->download_sample == $key.'-xls') {
                 return response()->download(public_path('storage/downloads/sample-files/bulk'.$key.'productupload.xlsx'));
-            } else if (empty(request()->download_sample)) {
-                return redirect()->back();
             }
         }
+
+        session()->flash('error', 'Product type is not available');
+
+        return redirect()->route('admin.bulk-upload.index');
     }
 
     /**
-     * Get profiles on basis of attribute family
+     * store import products for profile execution
      *
-     * @return array
+     * @return \Illuminate\Http\Response
      */
-    public function getAllDataFlowProfiles()
+    public function importNewProductsStore()
     {
-        // $attribute_family_id = request()->attribute_family_id;
+        // dd(request()->all());
+        request()->validate([
+            'file_path'           => 'required',
+            'attribute_family_id' => 'required',
+            'data_flow_profile'   => 'required',
+            'image_path'          => 'mimetypes:application/zip|max:10000',
 
-        $dataFlowProfiles = $this->dataFlowProfileRepository->findByField('attribute_family_id', request()->attribute_family_id);
+        ]);
 
-        return ['dataFlowProfiles' => $dataFlowProfiles];
+        if (! empty($this->dataFlowProfileRepository->find(request()->data_flow_profile))) {
+            $importedProducts = $this->importProduct->store();
+
+            return $importedProducts;
+        } else {
+            session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.data-profile-not-selected'));
+
+            return back();
+        }
     }
 
     /**
@@ -118,26 +123,6 @@ class HelperController extends Controller
             }
 
             return $countCSV;
-        }
-    }
-
-    /**
-     * store import products for profile execution
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function importNewProductsStore()
-    {
-        $dataFlowProfileId = request()->data_flow_profile;
-
-        if ($dataFlowProfileId) {
-            $importedProducts = $this->importProduct->store();
-
-            return $importedProducts;
-        } else {
-            session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.data-profile-not-selected'));
-
-            return back();
         }
     }
 
