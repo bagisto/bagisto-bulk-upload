@@ -78,7 +78,6 @@ class HelperController extends Controller
      */
     public function importNewProductsStore()
     {
-        // dd(request()->all());
         request()->validate([
             'file_path'           => 'required',
             'attribute_family_id' => 'required',
@@ -155,7 +154,7 @@ class HelperController extends Controller
 
                     switch($csvData[$i]['type']) {
                         case "simple":
-                            $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $product);
+                            $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $dataFlowProfileRecord, $csvData);
 
                             return response()->json($simpleProduct);
 

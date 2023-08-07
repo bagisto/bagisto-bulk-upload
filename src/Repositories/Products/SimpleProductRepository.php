@@ -64,23 +64,16 @@ class SimpleProductRepository extends Repository
      *
      * @return mixed
      */
-    public function createProduct($requestData, $imageZipName, $product)
+    public function createProduct($requestData, $imageZipName, $dataFlowProfileRecord, $csvData)
     {
         try {
-            $inventory = [];
-
-            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
-
-            $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
-
             if ($requestData['totalNumberOfCSVRecord'] < 1000) {
                 $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/10);
             } else {
                 $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/100);
             }
 
-            $uptoProcessCSVRecords = (int)$requestData['countOfStartedProfiles'] + 10;
+            $uptoProcessCSVRecords = (int)$requestData['countOfStartedProfiles'] + 100;
 
             $processRecords = (int)$requestData['countOfStartedProfiles'] + (int)$requestData['numberOfCSVRecord'];
 
@@ -93,7 +86,7 @@ class SimpleProductRepository extends Repository
                         return $invalidateProducts;
                     }
                 }
-            } else if ($requestData['numberOfCSVRecord'] <= 10) {
+            } else if ($requestData['numberOfCSVRecord'] <= 100) {
                 for ($i = $requestData['countOfStartedProfiles']; $i < $processRecords; $i++) {
                     $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName);
 
@@ -103,7 +96,7 @@ class SimpleProductRepository extends Repository
                 }
             }
 
-            if ($requestData['numberOfCSVRecord'] > 10) {
+            if ($requestData['numberOfCSVRecord'] > 100) {
                 $remainDataInCSV = (int)$requestData['numberOfCSVRecord'] - (int)$processCSVRecords;
             } else {
                 $remainDataInCSV = 0;
@@ -214,11 +207,7 @@ class SimpleProductRepository extends Repository
                 $attributeOptionArray = array();
                 $searchIndex = strtolower($value['code']);
 
-                if (array_key_exists($searchIndex, $csvData)) {
-
-                    if (is_null($csvData[$searchIndex])) {
-                        continue;
-                    }
+                if (array_key_exists($searchIndex, $csvData) && ! is_null($csvData[$searchIndex])) {
 
                     array_push($attributeCode, $searchIndex);
 
@@ -239,6 +228,8 @@ class SimpleProductRepository extends Repository
 
                     $data = array_combine($attributeCode, $attributeValue);
                 }
+                \Log::info($data);
+
             }
 
             $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
@@ -277,7 +268,7 @@ class SimpleProductRepository extends Repository
             $data['categories'] = $categoryID;
             $data['channel'] = core()->getCurrentChannel()->code;
 
-            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
+            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByField(['id' => $dataFlowProfileRecord->data_flow_profile_id]);
 
             $data['locale'] = $dataProfile->locale_code;
 

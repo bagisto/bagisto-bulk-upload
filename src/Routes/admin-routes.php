@@ -22,10 +22,10 @@ Route::group(['middleware' => ['web']], function () {
                 ])->name('admin.run-profile.index');
 
                 Route::post('/getprofiles', [BulkUploadController::class, 'getAllDataFlowProfiles'])
-                ->name('bulk-upload-admin.get-all-profile');
+                    ->name('bulk-upload-admin.get-all-profile');
 
                 Route::post('/read-csv', [HelperController::class, 'readCSVData'])
-                ->name('bulk-upload-admin.read-csv');
+                    ->name('bulk-upload-admin.read-csv');
 
                 // Download Sample Files
                 Route::post('/download',[HelperController::class, 'downloadFile'])->defaults('_config',[
