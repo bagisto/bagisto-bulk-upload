@@ -2,16 +2,18 @@
 
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
+use Illuminate\Support\Facades\Bus;
 use Webkul\Admin\Imports\DataGridImport;
-use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
-use Webkul\Bulkupload\Repositories\Products\SimpleProductRepository;
-use Webkul\Bulkupload\Repositories\Products\ConfigurableProductRepository;
-use Webkul\Bulkupload\Repositories\Products\VirtualProductRepository;
-use Webkul\Bulkupload\Repositories\Products\DownloadableProductRepository;
-use Webkul\Bulkupload\Repositories\Products\BundledProductRepository;
-use Webkul\Bulkupload\Repositories\Products\BookingProductRepository;
-use Webkul\Bulkupload\Repositories\Products\GroupedProductRepository;
 use Webkul\Bulkupload\Helpers\ImportProduct;
+use Webkul\Bulkupload\Jobs\ProductUploadJob;
+use Webkul\Bulkupload\Repositories\Products\SimpleProductRepository;
+use Webkul\Bulkupload\Repositories\Products\BookingProductRepository;
+use Webkul\Bulkupload\Repositories\Products\BundledProductRepository;
+use Webkul\Bulkupload\Repositories\Products\GroupedProductRepository;
+use Webkul\Bulkupload\Repositories\Products\VirtualProductRepository;
+use Webkul\Bulkupload\Repositories\Products\ConfigurableProductRepository;
+use Webkul\Bulkupload\Repositories\Products\DownloadableProductRepository;
+use Webkul\Bulkupload\Repositories\{ImportProductRepository, DataFlowProfileRepository};
 
 class HelperController extends Controller
 {
@@ -83,7 +85,6 @@ class HelperController extends Controller
             'attribute_family_id' => 'required',
             'data_flow_profile'   => 'required',
             'image_path'          => 'mimetypes:application/zip|max:10000',
-
         ]);
 
         if (! empty($this->dataFlowProfileRepository->find(request()->data_flow_profile))) {
@@ -108,21 +109,27 @@ class HelperController extends Controller
 
         $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', request()->data_flow_profile_id);
 
-        $this->dataFlowProfileRepository->update(['run_status' => '1'], request()->data_flow_profile_id);
+        // $this->dataFlowProfileRepository->update(['run_status' => '1'], request()->data_flow_profile_id);
 
         if ($dataFlowProfileRecord) {
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
 
-            for ($i = 0; $i < count($csvData); $i++) {
-                if ($csvData[$i]['type'] == 'configurable') {
-                    $countCSV += 1;
-                } else if ($csvData[0]['type'] != 'configurable') {
-                    $countCSV = count($csvData);
-                }
-            }
+            $countConfig = array_filter($csvData, function ($item) {
+                return $item['type'] === 'configurable';
+            });
 
-            return $countCSV;
+            if (count($countConfig)) {
+                $countCSV = count($countConfig);
+            } else {
+                $countCSV = count($csvData);
+            }
         }
+
+        return response()->json([
+            'csvData'               => $csvData,
+            'countCSV'              => $countCSV,
+            'dataFlowProfileRecord' => $dataFlowProfileRecord,
+        ]);
     }
 
     /**
@@ -132,64 +139,64 @@ class HelperController extends Controller
      */
     public function runProfile()
     {
-        $data_flow_profile_id = request()->data_flow_profile_id;
-        $numberOfCSVRecord = request()->numberOfCSVRecord;
-        $countOfStartedProfiles = request()->countOfStartedProfiles;
+        $data = request()->all();
+
         $product = [];
         $imageZipName = null;
+        $numberOfCSVRecord = $data['numberOfCSVRecord'];
+        $countOfStartedProfiles = $data['countOfStartedProfiles'];
 
-        $dataFlowProfileRecord = $this->importProductRepository->findOneByField
-        ('data_flow_profile_id', $data_flow_profile_id);
+        $dataFlowProfileRecord = $data['dataFlowProfileRecord'];
+        $csvData = $data['csvData'];
 
-        if ($dataFlowProfileRecord) {
-            $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
+        unset($data['csvData']);
+        unset($data['dataFlowProfileRecord']);
 
-            if (isset($dataFlowProfileRecord->image_path) && ($dataFlowProfileRecord->image_path != "") ) {
-                $imageZipName = $this->storeImageZip($dataFlowProfileRecord);
-            }
+        if (isset($dataFlowProfileRecord['image_path']) && ($dataFlowProfileRecord['image_path'] != "") ) {
+            $imageZipName = $this->storeImageZip($dataFlowProfileRecord);
+        }
 
-            if ($numberOfCSVRecord >= 0) {
-                for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
-                    $product['loopCount'] = $i;
+        if ($numberOfCSVRecord) {
+            for ($i = $countOfStartedProfiles; $i < count($csvData); $i++) {
+                $product['loopCount'] = $i;
 
-                    switch($csvData[$i]['type']) {
-                        case "simple":
-                            $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $dataFlowProfileRecord, $csvData);
+                switch($csvData[$i]['type']) {
+                    case "simple":
+                        $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $dataFlowProfileRecord, $csvData);
 
-                            return response()->json($simpleProduct);
+                        return response()->json($simpleProduct);
 
-                        case "virtual":
-                            $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
+                    case "virtual":
+                        $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
 
-                            return response()->json($virtualProduct);
-                        case "downloadable":
-                            $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
+                        return response()->json($virtualProduct);
+                    case "downloadable":
+                        $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
 
-                            return response()->json($downloadableProduct);
-                        case "grouped":
-                            $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
+                        return response()->json($downloadableProduct);
+                    case "grouped":
+                        $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
 
-                            return response()->json($groupedProduct);
-                        case "booking":
-                            $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
+                        return response()->json($groupedProduct);
+                    case "booking":
+                        $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
 
-                            return response()->json($bookingProduct);
-                        case "bundle":
-                            $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
+                        return response()->json($bookingProduct);
+                    case "bundle":
+                        $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
 
-                            return response()->json($bundledProduct);
-                        case "configurable" OR "variant":
-                            $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
+                        return response()->json($bundledProduct);
+                    case "configurable" OR "variant":
+                        $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
 
-                            return response()->json($configurableProduct);
-                    }
+                        return response()->json($configurableProduct);
                 }
-            } else {
-                return response()->json([
-                    "success" => true,
-                    "message" => "CSV Product Successfully Imported"
-                ]);
             }
+        } else {
+            return response()->json([
+                "success" => true,
+                "message" => "CSV Product Successfully Imported"
+            ]);
         }
     }
 
@@ -197,9 +204,9 @@ class HelperController extends Controller
     {
         $imageZip = new \ZipArchive();
 
-        $extractedPath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id.'/');
+        $extractedPath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord['id'].'/');
 
-        if ($imageZip->open(storage_path('app/public/'.$dataFlowProfileRecord->image_path))) {
+        if ($imageZip->open(storage_path('app/public/'.$dataFlowProfileRecord['image_path']))) {
             for ($i = 0; $i < $imageZip->numFiles; $i++) {
                 $filename = $imageZip->getNameIndex($i);
                 $imageZipName = pathinfo($filename);
@@ -220,5 +227,76 @@ class HelperController extends Controller
         }
 
         return $imageZipName;
+    }
+
+    public function productUploadFromCommand($command = null)
+    {
+        $profiles = $this->importProductRepository->with('profiler')->get()
+                    ->filter(fn($profile) => ! $profile->profiler->run_status)
+                    ->pluck('profiler');
+
+        $command->warn('Info: List of available Profiler to run...');
+
+        foreach ($profiles as $profile) {
+            $command->comment('Profiler Id: '. $profile->id . ', Profiler Name: '. $profile->name);
+        }
+
+        $dataFlowProfileId = $command->ask('Enter profiler id');
+
+        $countCSV = 0;
+
+        $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', $dataFlowProfileId);
+
+        // $this->dataFlowProfileRepository->update(['run_status' => '1'], $dataFlowProfileId);
+
+        if ($dataFlowProfileRecord) {
+            $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
+
+            $countConfig = array_filter($csvData, function ($item) {
+                                return $item['type'] === 'configurable';
+                            });
+
+            if (count($countConfig)) {
+                $countCSV = count($countConfig);
+            } else {
+                $countCSV = count($csvData);
+            }
+        }
+
+        if ($countCSV) {
+
+            $imageZipName = null;
+
+            if (isset($dataFlowProfileRecord->image_path) && ($dataFlowProfileRecord->image_path != "") ) {
+                $imageZipName = $this->storeImageZip($dataFlowProfileRecord);
+            }
+
+            $chunks = array_chunk($csvData, 100);
+
+            $batch = Bus::batch([])->dispatch();
+
+            $data = [
+                "data_flow_profile_id" => "10",
+                "numberOfCSVRecord" => 1,
+                "countOfStartedProfiles" => 0,
+                "totalNumberOfCSVRecord" => 1,
+                "productUploaded" => 0,
+                "errorCount" => 0,
+            ];
+
+
+            $batch->add(new ProductUploadJob($data, $imageZipName, $dataFlowProfileRecord, $chunks));
+
+
+dd("dscdc");
+
+        } else {
+            return response()->json([
+                "success" => true,
+                "message" => "CSV Product Successfully Imported"
+            ]);
+        }
+
+        dd("productUploadFromCommand");
     }
 }

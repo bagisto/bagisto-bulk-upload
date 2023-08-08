@@ -17,4 +17,9 @@ class DataFlowProfile extends Model implements DataFlowProfileContract
     {
         return $this->hasOne(AttributeFamily::class, 'id', 'attribute_family_id');
     }
+
+    public function import_product()
+    {
+        return $this->hasOne(ImportProduct::class, 'id', 'data_flow_profile_id');
+    }
 }

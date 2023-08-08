@@ -63,20 +63,10 @@ class BulkUploadController extends Controller
 
     public function getProfiler()
     {
-        $profiles = null;
-        $allProfiles = $this->importProductRepository->get()->toArray();
-
-        if (! empty($allProfiles)) {
-            foreach ($allProfiles as $allProfile) {
-                $profilers[] = $allProfile['data_flow_profile_id'];
-            }
-
-            foreach ($profilers as $key => $profiler) {
-                $profiles[] = $this->dataFlowProfileRepository->findByfield(['id' => $profilers[$key], 'run_status' => '0']);
-            }
-        }
+        $profiles = $this->importProductRepository->with('profiler')->get()
+                    ->filter(fn($profile) => ! $profile->profiler->run_status)
+                    ->pluck('profiler');
 
         return view($this->_config['view'], compact('profiles'));
-
     }
 }

@@ -10,4 +10,9 @@ class ImportProduct extends Model implements ImportProductContract
     protected $table = "import_products";
 
     protected $guarded = [];
+
+    public function profiler()
+    {
+        return $this->belongsTo(DataFlowProfile::class, 'data_flow_profile_id', 'id');
+    }
 }

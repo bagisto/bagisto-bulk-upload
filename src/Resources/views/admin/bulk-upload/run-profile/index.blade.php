@@ -28,15 +28,11 @@
                         <select class="control" id="data-flow-profile"  v-model="data_flow_profile" name="data_flow_profile">
                             <option>{{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}</option>
 
-                                @if (isset($profiles))
-                                    @foreach ($profiles as $profile)
-                                        @foreach ($profile as $getProfileToExecute)
-                                            <option value="{{ $getProfileToExecute->id }}">
-                                                {{ $getProfileToExecute->name }}
-                                            </option>
-                                        @endforeach
-                                    @endforeach
-                                @endif
+                            @foreach ($profiles as $profile)
+                                <option value="{{ $profile->id }}">
+                                    {{ $profile->name }}
+                                </option>
+                            @endforeach
                         </select>
 
                         <div class="page-action">
@@ -149,14 +145,14 @@
                         data_flow_profile_id: this.data_flow_profile
                     })
                     .then((result) => {
-                        totalRecords = result.data;
+                        totalRecords = result.data.countCSV;
 
                         if (typeof(totalRecords) == 'number') {
                             this.product.totalCSVRecords = this.product.remainDataInCSV = totalRecords;
                         }
 
                         if(totalRecords > this.product.countOfStartedProfiles) {
-                            this.initiateProfiler(totalRecords);
+                            this.initiateProfiler(result);
                         } else {
                             window.flashMessages = [{
                                 'type': 'alert-error',
@@ -170,17 +166,18 @@
                     });
                 },
 
-                initiateProfiler: function(totalRecords) {
+                initiateProfiler: function(result) {
 
                     const url = "{{ route('bulk-upload-admin.run-profile') }}"
 
                     this.$http.post(url, {
-                        data_flow_profile_id: this.data_flow_profile,
-                        numberOfCSVRecord: totalRecords,
+                        numberOfCSVRecord: result.data.countCSV,
                         countOfStartedProfiles: this.product.countOfStartedProfiles,
                         totalNumberOfCSVRecord: this.product.totalCSVRecords,
                         productUploaded: this.product.countOfImportedProduct,
-                        errorCount: this.product.countOfError
+                        errorCount: this.product.countOfError,
+                        dataFlowProfileRecord: result.data.dataFlowProfileRecord,
+                        csvData: result.data.csvData
                     })
                     .then((result) => {
                         this.data = result.data;
