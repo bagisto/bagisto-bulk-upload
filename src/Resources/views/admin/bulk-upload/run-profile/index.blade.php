@@ -28,11 +28,13 @@
                         <select class="control" id="data-flow-profile"  v-model="data_flow_profile" name="data_flow_profile">
                             <option>{{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}</option>
 
-                            @foreach ($profiles as $profile)
-                                <option value="{{ $profile->id }}">
-                                    {{ $profile->name }}
-                                </option>
-                            @endforeach
+                                @if (isset($profiles))
+                                    @foreach ($profiles as $profile)
+                                        <option value="{{ $profile->id }}">
+                                            {{ $profile->name }}
+                                        </option>
+                                    @endforeach
+                                @endif
                         </select>
 
                         <div class="page-action">
@@ -42,6 +44,34 @@
                         </div>
                     </div>
             </form>
+
+            <div class="page-action">
+                <span
+                    :class="{ disabled: isDisabled }"
+                    :disabled="isDisabled"
+                    class="btn btn-lg btn-primary mt-10"
+                    @click=runConsoleCommand
+                >
+                    {{ __('bulkupload::app.admin.bulk-upload.run-profile.run-command') }}
+                </Span>
+            </div>
+
+            <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.run-profile.error') }}'" :active="true">
+                <div slot="body">
+
+                    <div v-for="(item, index) in errorCsvFile" :key="index" >
+                        <a
+                            :href="item.link"
+                        >
+                            Download CSV
+                        </a>
+                        <span>
+                            @{{ item.time }}
+                        </span>
+
+                    </div>
+                </div>
+            </accordian>
 
             <div class="uploading-records" v-if="this.product.totalCSVRecords">
                 <uploadingrecords :percentCount="percent" :uploadedProducts="product.countOfImportedProduct" :errorProduct="product.error" :totalRecords="product.totalCSVRecords" :countOfError="product.countOfError" :remainData="product.remainDataInCSV" ></uploadingrecords>
@@ -117,17 +147,21 @@
                         countOfError: 0,
                         remainDataInCSV: 1,
                     },
+                    errorCsvFile: [],
                 }
             },
 
             computed: {
                 isDisabled () {
+
+                    this.getErrorCsvFile();
+
                     if (this.data_flow_profile == '' || this.data_flow_profile == 'Please Select') {
                         return true;
                     } else {
                         return false;
                     }
-                }
+                },
             },
 
             methods:{
@@ -145,14 +179,14 @@
                         data_flow_profile_id: this.data_flow_profile
                     })
                     .then((result) => {
-                        totalRecords = result.data.countCSV;
+                        totalRecords = result.data;
 
                         if (typeof(totalRecords) == 'number') {
                             this.product.totalCSVRecords = this.product.remainDataInCSV = totalRecords;
                         }
 
                         if(totalRecords > this.product.countOfStartedProfiles) {
-                            this.initiateProfiler(result);
+                            this.initiateProfiler(totalRecords);
                         } else {
                             window.flashMessages = [{
                                 'type': 'alert-error',
@@ -166,18 +200,17 @@
                     });
                 },
 
-                initiateProfiler: function(result) {
+                initiateProfiler: function(totalRecords) {
 
                     const url = "{{ route('bulk-upload-admin.run-profile') }}"
 
                     this.$http.post(url, {
-                        numberOfCSVRecord: result.data.countCSV,
+                        data_flow_profile_id: this.data_flow_profile,
+                        numberOfCSVRecord: totalRecords,
                         countOfStartedProfiles: this.product.countOfStartedProfiles,
                         totalNumberOfCSVRecord: this.product.totalCSVRecords,
                         productUploaded: this.product.countOfImportedProduct,
-                        errorCount: this.product.countOfError,
-                        dataFlowProfileRecord: result.data.dataFlowProfileRecord,
-                        csvData: result.data.csvData
+                        errorCount: this.product.countOfError
                     })
                     .then((result) => {
                         this.data = result.data;
@@ -223,7 +256,37 @@
                 },
 
                 finishProfiler(percent) {
-                }
+                },
+
+                runConsoleCommand: function(e) {
+                    this.detectProfile();
+
+                    const uri = "{{ route('bulk-upload-admin.read-csv-command') }}"
+
+                    this.$http.post(uri, {
+                        data_flow_profile_id: this.data_flow_profile
+                    })
+                    .then((result) => {
+                        this.getErrorCsvFile();
+
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+                },
+
+                getErrorCsvFile: function(e) {
+
+                    const uri = "{{ route('download.csv') }}"
+
+                    this.$http.get(uri)
+                        .then((result) => {
+                            this.errorCsvFile = result.data[this.data_flow_profile];
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
+                },
             },
         })
 

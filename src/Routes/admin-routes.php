@@ -1,8 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Webkul\Bulkupload\Http\Controllers\Admin\BulkUploadController;
+use Illuminate\Support\Facades\Artisan;
 use Webkul\Bulkupload\Http\Controllers\Admin\HelperController;
+use Webkul\Bulkupload\Http\Controllers\Admin\BulkUploadController;
 use Webkul\Bulkupload\Http\Controllers\Admin\DataFlowProfileController;
 
 Route::group(['middleware' => ['web']], function () {
@@ -27,7 +28,7 @@ Route::group(['middleware' => ['web']], function () {
                 Route::post('/read-csv', [HelperController::class, 'readCSVData'])
                     ->name('bulk-upload-admin.read-csv');
 
-                Route::get('/read-csv', function() {
+                Route::post('/read-csv-command', function() {
                     Artisan::call('upload:products');
                 })->name('bulk-upload-admin.read-csv-command');
 
@@ -35,6 +36,8 @@ Route::group(['middleware' => ['web']], function () {
                 Route::post('/download',[HelperController::class, 'downloadFile'])->defaults('_config',[
                     'view' => 'bulkupload::admin.bulk-upload.upload-files.index'
                 ])->name('download-sample-files');
+
+                Route::get('/download-csv', [HelperController::class, 'downloadCsv'])->name('download.csv');
 
                 // import new products
                 Route::post('/importnew', [HelperController::class, 'importNewProductsStore'])->defaults('_config',[

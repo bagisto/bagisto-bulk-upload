@@ -65,9 +65,16 @@ class SimpleProductRepository extends Repository
      *
      * @return mixed
      */
-    public function createProduct($requestData, $imageZipName, $dataFlowProfileRecord, $csvData)
+    public function createProduct($requestData, $imageZipName, $product)
     {
         try {
+            $inventory = [];
+
+            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
+            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
+
+            $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
+
             if ($requestData['totalNumberOfCSVRecord'] < 1000) {
                 $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/10);
             } else {
@@ -208,7 +215,11 @@ class SimpleProductRepository extends Repository
                 $attributeOptionArray = array();
                 $searchIndex = strtolower($value['code']);
 
-                if (array_key_exists($searchIndex, $csvData) && ! is_null($csvData[$searchIndex])) {
+                if (array_key_exists($searchIndex, $csvData)) {
+
+                    if (is_null($csvData[$searchIndex])) {
+                        continue;
+                    }
 
                     array_push($attributeCode, $searchIndex);
 
@@ -229,8 +240,6 @@ class SimpleProductRepository extends Repository
 
                     $data = array_combine($attributeCode, $attributeValue);
                 }
-                \Log::info($data);
-
             }
 
             $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
@@ -269,7 +278,7 @@ class SimpleProductRepository extends Repository
             $data['categories'] = $categoryID;
             $data['channel'] = core()->getCurrentChannel()->code;
 
-            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByField(['id' => $dataFlowProfileRecord->data_flow_profile_id]);
+            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
 
             $data['locale'] = $dataProfile->locale_code;
 

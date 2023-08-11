@@ -30,8 +30,10 @@ return [
             'run-profile' => [
                 'run'               => 'Run',
                 'index'             => 'Run Profile',
+                'error'             => 'Products which are not uploaded',
                 'finish'            => 'Finished Profile Execution',
                 'warning'           => 'Warning: Please do not close the window during importing data',
+                'run-command'       => 'Run Using Command',
                 'error-count'       => 'Number of errors while product uploading',
                 'select-file'       => 'Select File',
                 'please-select'     => 'Please Select',
