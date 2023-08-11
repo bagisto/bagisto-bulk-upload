@@ -125,7 +125,7 @@ class ImportProduct
         if ($data) {
             $this->dataFlowProfileRepository->update(['run_status' => '0'], $data_flow_profile_id);
 
-            $this->importProductRepository->Update($product, $data->id);
+            $this->importProductRepository->update($product, $data->id);
 
             session()->flash('success',trans('bulkupload::app.admin.bulk-upload.messages.update-profile'));
 

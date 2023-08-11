@@ -27,6 +27,10 @@ Route::group(['middleware' => ['web']], function () {
                 Route::post('/read-csv', [HelperController::class, 'readCSVData'])
                     ->name('bulk-upload-admin.read-csv');
 
+                Route::get('/read-csv', function() {
+                    Artisan::call('upload:products');
+                })->name('bulk-upload-admin.read-csv-command');
+
                 // Download Sample Files
                 Route::post('/download',[HelperController::class, 'downloadFile'])->defaults('_config',[
                     'view' => 'bulkupload::admin.bulk-upload.upload-files.index'

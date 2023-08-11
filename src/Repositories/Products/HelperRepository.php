@@ -47,13 +47,8 @@ class HelperRepository extends Repository
      * @param  \Webkul\Product\Contracts\Product  $product
      * @return array
      */
-    public function validateCSV($dataFlowProfileId, $records, $dataFlowProfileRecord, $product)
+    public function validateCSV($records, $dataFlowProfileRecord, $product)
     {
-        $messages = [];
-        $rules = [];
-
-        $profiler = $this->dataFlowProfileRepository->findOneByField('id', $dataFlowProfileId);
-
         if ($dataFlowProfileRecord) {
             foreach($records as $data) {
                 $this->rules = array_merge($product->getTypeInstance()->getTypeValidationRules(), [
@@ -153,7 +148,7 @@ class HelperRepository extends Repository
                 }
 
                 request()->countOfStartedProfiles =  $loopCount + 1;
-
+                
                 $productsUploaded = $loopCount - request()->errorCount;
 
                 if (request()->numberOfCSVRecord != 0) {

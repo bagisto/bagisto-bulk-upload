@@ -69,12 +69,12 @@ class SimpleProductRepository extends Repository
     {
         try {
             if ($requestData['totalNumberOfCSVRecord'] < 1000) {
-                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/100);
+                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/10);
             } else {
                 $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/100);
             }
 
-            $uptoProcessCSVRecords = (int)$requestData['countOfStartedProfiles'] + 100;
+            $uptoProcessCSVRecords = (int)$requestData['countOfStartedProfiles'] + 10;
 
             $processRecords = (int)$requestData['countOfStartedProfiles'] + (int)$requestData['numberOfCSVRecord'];
 
@@ -87,7 +87,7 @@ class SimpleProductRepository extends Repository
                         return $invalidateProducts;
                     }
                 }
-            } else if ($requestData['numberOfCSVRecord'] <= 100) {
+            } else if ($requestData['numberOfCSVRecord'] <= 10) {
                 for ($i = $requestData['countOfStartedProfiles']; $i < $processRecords; $i++) {
                     $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName);
 
@@ -97,7 +97,7 @@ class SimpleProductRepository extends Repository
                 }
             }
 
-            if ($requestData['numberOfCSVRecord'] > 100) {
+            if ($requestData['numberOfCSVRecord'] > 10) {
                 $remainDataInCSV = (int)$requestData['numberOfCSVRecord'] - (int)$processCSVRecords;
             } else {
                 $remainDataInCSV = 0;
@@ -371,11 +371,15 @@ class SimpleProductRepository extends Repository
      *
      * @return mixed
      */
-    public function createProductFromCommand($requestData, $imageZipName, $dataFlowProfileRecord, $csvData)
+    public function createProductFromCommand($imageZipName, $dataFlowProfileRecord, $csvData, $key)
     {
-        dd($requestData, $imageZipName, $dataFlowProfileRecord, $csvData);
         try {
-            $this->storeFromCommand($csvData, $dataFlowProfileRecord, $requestData, $imageZipName);
+            $invalidateProducts = $this->storeFromCommand(request()->all(), $imageZipName, $dataFlowProfileRecord, $csvData, $key);
+
+            if (isset($invalidateProducts) && !empty($invalidateProducts)) {
+
+                return $invalidateProducts;
+            }
 
         } catch (\Exception $e) {
             Log::error('simple create product log: '. $e->getMessage());
@@ -393,9 +397,15 @@ class SimpleProductRepository extends Repository
      *
      * @return mixed
      */
-    public function storeFromCommand($csvData, $dataFlowProfileRecord, $requestData, $imageZipName)
+    public function storeFromCommand($requestData, $imageZipName, $dataFlowProfileRecord, $csvData, $i)
     {
         try {
+            $createValidation = $this->helperRepository->createProductValidation($csvData, $i);
+
+            if (isset($createValidation)) {
+                return $createValidation;
+            }
+
             $productFlatData = $this->productFlatRepository->findWhere(['sku' => $csvData['sku'], 'url_key' => $csvData['url_key']])->first();
 
             $productData = $this->productRepository->findWhere(['sku' => $csvData['sku']])->first();
@@ -420,7 +430,7 @@ class SimpleProductRepository extends Repository
             $attributeValue = [];
 
             //default attributes
-            foreach ($simpleproductData->getTypeInstance()->getEditableAttributes()->toArray() as $key => $value) {
+            foreach ($simpleproductData->getTypeInstance()->getEditableAttributes()->toArray() as $value) {
                 $attributeOptionArray = array();
                 $searchIndex = strtolower($value['code']);
 
@@ -445,8 +455,6 @@ class SimpleProductRepository extends Repository
 
                     $data = array_combine($attributeCode, $attributeValue);
                 }
-                \Log::info($data);
-
             }
 
             $data['dataFlowProfileRecordId'] = $dataFlowProfileRecord->id;
@@ -454,13 +462,13 @@ class SimpleProductRepository extends Repository
             $inventorySource = $csvData['inventory_sources'];
             $inventoryCode = explode(',', $inventorySource);
 
-            foreach ($inventoryCode as $key => $value) {
+            foreach ($inventoryCode as $value) {
                 $inventoryId = $this->inventorySourceRepository->findOneByfield(['code' => trim($value)])->pluck('id')->toArray();
             }
 
             $inventoryData[] = (string)$csvData['inventories'];
 
-            foreach ($inventoryData as $key => $d) {
+            foreach ($inventoryData as $d) {
                 $inventoryQuantity = explode(',', trim($d));
 
                 if (count($inventoryId) != count($inventoryQuantity)) {
@@ -477,15 +485,15 @@ class SimpleProductRepository extends Repository
             if (is_null($csvData['categories_slug']) || empty($csvData['categories_slug'])) {
                 $categoryID = $this->categoryRepository->findBySlugOrFail('root')->id;
             } else {
-                foreach ($categoryData as $key => $value) {
-                    $categoryID[$key] = $this->categoryRepository->findBySlugOrFail($categoryData[$key])->id;
+                foreach ($categoryData as $k => $value) {
+                    $categoryID[$k] = $this->categoryRepository->findBySlugOrFail($categoryData[$k])->id;
                 }
             }
 
             $data['categories'] = $categoryID;
             $data['channel'] = core()->getCurrentChannel()->code;
 
-            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByField(['id' => $dataFlowProfileRecord->data_flow_profile_id]);
+            $dataProfile = $dataFlowProfileRecord->profiler;
 
             $data['locale'] = $dataProfile->locale_code;
 
@@ -527,8 +535,47 @@ class SimpleProductRepository extends Repository
                 }
             }
 
+            $returnRules = $this->helperRepository->validateCSV($data, $dataFlowProfileRecord, $simpleproductData);
+
+            $csvValidator = Validator::make($data, $returnRules);
+
+            if ($csvValidator->fails()) {
+                $errors = $csvValidator->errors()->getMessages();
+
+                $this->helperRepository->deleteProductIfNotValidated($simpleproductData->id);
+
+                foreach($errors as $error) {
+                    if ($error[0] == "The url key has already been taken.") {
+                        $errorToBeReturn[] = "The url key " . $data['url_key'] . " has already been taken";
+                    } else {
+                        $errorToBeReturn[] = str_replace(".", "", $error[0]). " for sku " . $data['sku'];
+                    }
+                }
+
+                $requestData['countOfStartedProfiles'] =  $i + 1;
+
+                $productsUploaded = $i - $requestData['errorCount'];
+
+                if ($requestData['numberOfCSVRecord'] != 0) {
+                    $remainDataInCSV = (int)$requestData['totalNumberOfCSVRecord'] - (int)$requestData['countOfStartedProfiles'];
+                } else {
+                    $remainDataInCSV = 0;
+                }
+
+                $dataToBeReturn = array(
+                    'remainDataInCSV' => $remainDataInCSV,
+                    'productsUploaded' => $productsUploaded,
+                    'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
+                    'error' => $errorToBeReturn,
+                );
+
+                return $dataToBeReturn;
+            }
+
             Event::dispatch('catalog.product.update.before',  $simpleproductData->id);
+
             $configSimpleProductAttributeStore = $this->productRepository->update($data, $simpleproductData->id);
+
             Event::dispatch('catalog.product.update.after',$configSimpleProductAttributeStore);
 
             if (isset($imageZipName)) {

@@ -3,8 +3,6 @@
 namespace Webkul\Bulkupload\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Http;
 
 class UploadProduct extends Command
 {

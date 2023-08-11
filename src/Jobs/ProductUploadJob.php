@@ -2,6 +2,9 @@
 
 namespace Webkul\Bulkupload\Jobs;
 
+use Excel;
+use Illuminate\Support\Str;
+use Webkul\Admin\Exports\DataGridExport;
 use Illuminate\Bus\{Batchable, Queueable};
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,7 +19,6 @@ class ProductUploadJob implements ShouldQueue
      * @param  array $chunk
      */
     public function __construct(
-        protected $data,
         protected $imageZipName,
         protected $dataFlowProfileRecord,
         protected $chunk,
@@ -27,39 +29,23 @@ class ProductUploadJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle()
     {
         $simpleProductRepository = app('Webkul\Bulkupload\Repositories\Products\SimpleProductRepository');
 
+        $errorArray = [];
+        $records = [];
+
         foreach($this->chunk as $data) {
-            foreach($data as $arr) {
-dd($arr);
-                switch($csvData[$i]['type']) {
-                    case "simple":
-                        $simpleProduct = $this->simpleProductRepository->createProduct(request()->all(), $imageZipName, $dataFlowProfileRecord, $csvData);
-
-                    case "virtual":
-                        $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
-
-                    case "downloadable":
-                        $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
-
-                    case "grouped":
-                        $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
-
-                    case "booking":
-                        $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
-
-                    case "bundle":
-                        $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
-
-                    case "configurable" OR "variant":
-                        $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
-
+            foreach($data as $key => $arr) {
+                $uploadedProduct = $simpleProductRepository->createProductFromCommand($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
+                if (! empty($uploadedProduct)) {
+                    $errorArray['error'] = json_encode($uploadedProduct['error']);
+                    $records[$key] = (object) array_merge($arr, $errorArray);
                 }
-
-                $simpleProductRepository->createProductFromCommand($this->data, $this->imageZipName, $this->dataFlowProfileRecord, $arr);
             }
         }
+
+        Excel::store(new DataGridExport(collect($records)), 'error-csv-file/'.$this->dataFlowProfileRecord->profiler->id.'/'.Str::random(10).'.csv');
     }
 }

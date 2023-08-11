@@ -2,7 +2,9 @@
 
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
+use Excel;
 use Illuminate\Support\Facades\Bus;
+use Webkul\Admin\Exports\DataGridExport;
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Bulkupload\Helpers\ImportProduct;
 use Webkul\Bulkupload\Jobs\ProductUploadJob;
@@ -231,6 +233,7 @@ class HelperController extends Controller
 
     public function productUploadFromCommand($command = null)
     {
+        dd(request()->all());
         $profiles = $this->importProductRepository->with('profiler')->get()
                     ->filter(fn($profile) => ! $profile->profiler->run_status)
                     ->pluck('profiler');
@@ -241,7 +244,8 @@ class HelperController extends Controller
             $command->comment('Profiler Id: '. $profile->id . ', Profiler Name: '. $profile->name);
         }
 
-        $dataFlowProfileId = $command->ask('Enter profiler id');
+        // $dataFlowProfileId = $command->ask('Enter profiler id');
+        $dataFlowProfileId = request()->input('data_flow_profile_id');
 
         $countCSV = 0;
 
@@ -275,20 +279,20 @@ class HelperController extends Controller
 
             $batch = Bus::batch([])->dispatch();
 
-            $data = [
-                "data_flow_profile_id" => "10",
-                "numberOfCSVRecord" => 1,
-                "countOfStartedProfiles" => 0,
-                "totalNumberOfCSVRecord" => 1,
+            request()->merge([
+                "totalNumberOfCSVRecord" => $countCSV,
+                "remainingProducts" => $countCSV,
                 "productUploaded" => 0,
                 "errorCount" => 0,
-            ];
+                "countOfStartedProfiles" => 0,
+                "numberOfCSVRecord" => $countCSV,
+            ]);
 
+            $batch->add(new ProductUploadJob($imageZipName, $dataFlowProfileRecord, $chunks));
 
-            $batch->add(new ProductUploadJob($data, $imageZipName, $dataFlowProfileRecord, $chunks));
-
-
-dd("dscdc");
+            response()->json([
+                'sucess' => true,
+            ]);
 
         } else {
             return response()->json([
@@ -296,7 +300,5 @@ dd("dscdc");
                 "message" => "CSV Product Successfully Imported"
             ]);
         }
-
-        dd("productUploadFromCommand");
     }
 }
