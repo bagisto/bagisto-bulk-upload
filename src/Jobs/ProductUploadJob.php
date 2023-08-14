@@ -35,17 +35,23 @@ class ProductUploadJob implements ShouldQueue
 
         $errorArray = [];
         $records = [];
+        $uploadedProduct = [];
+        $isError = false;
 
         foreach($this->chunk as $data) {
             foreach($data as $key => $arr) {
                 $uploadedProduct = $simpleProductRepository->createProductFromCommand($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
                 if (! empty($uploadedProduct)) {
+                    $isError = true;
                     $errorArray['error'] = json_encode($uploadedProduct['error']);
-                    $records[$key] = (object) array_merge($arr, $errorArray);
+                    $records[$key] = (object) array_merge($errorArray, $arr);
                 }
             }
         }
 
-        Excel::store(new DataGridExport(collect($records)), 'error-csv-file/'.$this->dataFlowProfileRecord->profiler->id.'/'.Str::random(10).'.csv');
+        if ($isError) {
+            Excel::store(new DataGridExport(collect($records)), 'error-csv-file/'.$this->dataFlowProfileRecord->profiler->id.'/'.Str::random(10).'.csv');
+        }
+
     }
 }

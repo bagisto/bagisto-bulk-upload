@@ -4,6 +4,40 @@
     {{ __('bulkupload::app.admin.bulk-upload.run-profile.index') }}
 @stop
 
+@push('css')
+    <style>
+        /* Loader Styles */
+        .loader-container {
+            /* display: none; */
+            position: absolute;
+            /* top: 0; */
+            left: 25%;
+            /* width: 100%; */
+            /* height: 100%; */
+            bottom: 10%;
+            background-color: rgba(0, 0, 0, 0); /* Transparent black background */
+            z-index: -9999; /* Higher z-index to ensure it's on top of other elements */
+            pointer-events: none; /* Allow user interactions with elements below */
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey border */
+            border-top: 4px solid #3498db; /* Blue border on top to create the spinning effect */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite; /* Spin animation */
+
+        }
+
+        .page-action {
+            position: relative;
+        }
+
+
+    </style>
+@endpush
+
 @section('content')
 
     <!-- Run Profile -->
@@ -50,25 +84,65 @@
                     :class="{ disabled: isDisabled }"
                     :disabled="isDisabled"
                     class="btn btn-lg btn-primary mt-10"
-                    @click=runConsoleCommand
+                    @click="runConsoleCommand"
                 >
                     {{ __('bulkupload::app.admin.bulk-upload.run-profile.run-command') }}
                 </Span>
+
+                <div id="loaderContainer" class="loader-container" style="display:none;">
+                    <div class="loader" ></div>
+                </div>
             </div>
+
+            <br>
 
             <accordian :title="'{{ __('bulkupload::app.admin.bulk-upload.run-profile.error') }}'" :active="true">
                 <div slot="body">
 
                     <div v-for="(item, index) in errorCsvFile" :key="index" >
-                        <a
-                            :href="item.link"
-                        >
-                            Download CSV
-                        </a>
-                        <span>
-                            @{{ item.time }}
-                        </span>
 
+                        <table>
+                            <tr>
+                                <th>
+                                    Profiler Name:-
+                                </th>
+                                <td>
+                                    @{{ profilerName }}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th>
+                                    CSV Link
+                                </th>
+                                <th>
+                                    Date & Time
+                                </th>
+                                <th>
+                                    Delete File
+                                </th>
+                            </tr>
+
+                            <tr v-for="(record) in item">
+                                <td>
+                                    <a
+                                        :href="record.link"
+                                    >
+                                        Download CSV
+                                    </a>
+                                </td>
+                                <td>
+                                    <span>
+                                        @{{ record.time }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span @click="deleteCSV(index, record.fileName)">
+                                        Delete
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </accordian>
@@ -148,12 +222,12 @@
                         remainDataInCSV: 1,
                     },
                     errorCsvFile: [],
+                    profilerName: '',
                 }
             },
 
             computed: {
                 isDisabled () {
-
                     this.getErrorCsvFile();
 
                     if (this.data_flow_profile == '' || this.data_flow_profile == 'Please Select') {
@@ -259,6 +333,10 @@
                 },
 
                 runConsoleCommand: function(e) {
+                    event.target.disabled = true;
+
+                    $("#loaderContainer").show();
+
                     this.detectProfile();
 
                     const uri = "{{ route('bulk-upload-admin.read-csv-command') }}"
@@ -269,10 +347,22 @@
                     .then((result) => {
                         this.getErrorCsvFile();
 
+                        window.flashMessages = [{
+                            'type': 'alert-error',
+                            'message': 'Products uploaded successfully.'
+                        }];
+
+                        this.$root.addFlashMessages();
+
+                        $("#loaderContainer").hide();
+
+                        window.location.reload();
+
                     })
                     .catch(function (error) {
                         console.log(error);
                     });
+
                 },
 
                 getErrorCsvFile: function(e) {
@@ -281,12 +371,48 @@
 
                     this.$http.get(uri)
                         .then((result) => {
-                            this.errorCsvFile = result.data[this.data_flow_profile];
+                            this.errorCsvFile = result.data;
                         })
                         .catch(function (error) {
                             console.log(error);
                         });
                 },
+
+                getProfilerName: function(item, id) {
+                    const uri = "{{ route('get.profiler.name') }}"
+
+                    this.$http.get(uri, {params: {id: id}})
+                        .then(async (result) => {
+                            this.profilerName[id] = result.data;
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
+                },
+
+                deleteCSV: function(id, name) {
+                    const uri = "{{ route('delete.csv.file') }}"
+
+                    this.$http.get(uri, {params: {id: id, name:name}})
+                        .then((result) => {
+                            // window.flashMessages = [{
+                            //     'type': 'alert-error',
+                            //     'message': result.data.message
+                            // }];
+
+                            window.flashMessages = [{
+                                'type': 'alert-error',
+                                'message': result.data.message
+                            }];
+
+                            this.$root.addFlashMessages();
+
+                            this.getErrorCsvFile();
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
+                }
             },
         })
 

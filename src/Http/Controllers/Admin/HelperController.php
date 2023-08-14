@@ -5,6 +5,7 @@ namespace Webkul\Bulkupload\Http\Controllers\Admin;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Bulkupload\Helpers\ImportProduct;
 use Webkul\Bulkupload\Jobs\ProductUploadJob;
@@ -284,6 +285,11 @@ class HelperController extends Controller
             ]);
 
             $batch->add(new ProductUploadJob($imageZipName, $dataFlowProfileRecord, $chunks));
+
+            return response()->json([
+                "success" => true,
+                "message" => "CSV Product Successfully Imported"
+            ]);
         } else {
             return response()->json([
                 "success" => true,
@@ -298,8 +304,9 @@ class HelperController extends Controller
 
         $uploadedFilesError = array_map(function ($file) {
             return [
-                    $file->getRelativePath() => $file->getRealPath(),
-                    'time' => date('Y-m-d H:i:s', filectime($file))
+                    $file->getRelativePath() => asset('storage/error-csv-file/'.$file->getRelativePathname()),
+                    'time' => date('Y-m-d H:i:s', filectime($file)),
+                    'fileName' => $file->getFilename(),
                 ];
         }, $uploadedFilesError);
 
@@ -312,14 +319,31 @@ class HelperController extends Controller
                             return [
                                 'link' => $item[key($item)],
                                 'time' => $item['time'],
+                                'fileName' => $item['fileName'],
                             ];
                         });
                     });
 
                 // Convert the result to a plain array
-                $resultArray = $resultArray->toArray();
+        $resultArray = $resultArray->toArray();
 
         return response()->json($resultArray);
+    }
 
+    public function getProfiler()
+    {
+        return $this->dataFlowProfileRepository->find(request()->input('id'))->name;
+    }
+
+    public function deleteCSV()
+    {
+        $fileToDelete = 'error-csv-file/'.request()->input('id').'/'.request()->input('name');
+
+        if (Storage::exists($fileToDelete)) {
+            Storage::delete($fileToDelete);
+            return response()->json(['message' => 'File deleted successfully']);
+        } else {
+            return response()->json(['message' => 'File not found'], 404);
+        }
     }
 }
