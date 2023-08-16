@@ -89,9 +89,11 @@
                     {{ __('bulkupload::app.admin.bulk-upload.run-profile.run-command') }}
                 </Span>
 
-                <div id="loaderContainer" class="loader-container" style="display:none;">
+                <div id="loaderContainer" class="loader-container" v-if="running">
                     <div class="loader" ></div>
                 </div>
+
+                <p v-if="running">Time Taken: @{{ formattedTime }}</p>
             </div>
 
             <br>
@@ -138,7 +140,7 @@
                                 </td>
                                 <td>
                                     <span @click="deleteCSV(index, record.fileName)">
-                                        Delete
+                                        <button class="btn btn-primary">Delete</button>
                                     </span>
                                 </td>
                             </tr>
@@ -223,7 +225,21 @@
                     },
                     errorCsvFile: [],
                     profilerName: '',
+
+                    startTime: 0,
+                    timer: {
+                        seconds: 0,
+                        minutes: 0,
+                        interval: null,
+                    },
+                    running: false,
                 }
+            },
+
+            mounted() {
+                this.resetTimer();
+                        this.stopTimer();
+                this.loadStoredTimer();
             },
 
             computed: {
@@ -235,6 +251,12 @@
                     } else {
                         return false;
                     }
+                },
+
+                formattedTime() {
+                    const minutes = Math.floor(this.timer.seconds / 60);
+                    const seconds = this.timer.seconds % 60;
+                    return `${minutes} minutes ${seconds} seconds`;
                 },
             },
 
@@ -333,11 +355,27 @@
                 },
 
                 runConsoleCommand: function(e) {
+
+                    if (e.target.disabled === true) {
+                        window.flashMessages = [{
+                            'type': 'alert-error',
+                            'message': 'Please select file.'
+                        }];
+
+                        this.$root.addFlashMessages();
+
+                        return ;
+                    }
+
                     event.target.disabled = true;
 
                     $("#loaderContainer").show();
 
+                    this.startTimer()
+
                     this.detectProfile();
+
+                    checkRequestStatusInterval = setInterval(this.checkRequestStatus, 5000);
 
                     const uri = "{{ route('bulk-upload-admin.read-csv-command') }}"
 
@@ -345,7 +383,28 @@
                         data_flow_profile_id: this.data_flow_profile
                     })
                     .then((result) => {
+                        localStorage.setItem('requestCompleted', 'true'); // Store a flag in local storage
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+
+                },
+
+                checkRequestStatus: function () {
+                    if (localStorage.getItem('requestCompleted')) {
                         this.getErrorCsvFile();
+
+                        $("#loaderContainer").hide();
+
+                        this.resetTimer();
+                        this.stopTimer();
+
+                        // setInterval(window.location.reload(), 5000);
+
+                        localStorage.setItem('requestCompleted', 'false');
+
+                        clearInterval(this.timer.checkRequestStatusInterval);
 
                         window.flashMessages = [{
                             'type': 'alert-error',
@@ -353,16 +412,7 @@
                         }];
 
                         this.$root.addFlashMessages();
-
-                        $("#loaderContainer").hide();
-
-                        window.location.reload();
-
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    });
-
+                    }
                 },
 
                 getErrorCsvFile: function(e) {
@@ -395,10 +445,6 @@
 
                     this.$http.get(uri, {params: {id: id, name:name}})
                         .then((result) => {
-                            // window.flashMessages = [{
-                            //     'type': 'alert-error',
-                            //     'message': result.data.message
-                            // }];
 
                             window.flashMessages = [{
                                 'type': 'alert-error',
@@ -412,7 +458,56 @@
                         .catch(function (error) {
                             console.log(error);
                         });
-                }
+                },
+
+                startTimer() {
+                    if (!this.running) {
+                        this.startTime = new Date().getTime() - (this.timer.seconds * 1000);
+                        this.timer.interval = setInterval(this.updateTimer, 1000); // Update every second
+                        this.running = true;
+                        this.storeTimerState();
+                    }
+                },
+
+                resetTimer() {
+                    this.timer.seconds = 0;
+                    this.startTime = new Date().getTime();
+                    this.storeTimerState();
+                },
+
+                updateTimer() {
+                    const currentTime = new Date().getTime();
+                    const elapsedTime = Math.floor((currentTime - this.startTime) / 1000);
+                    this.timer.seconds = elapsedTime;
+                    this.storeTimerState();
+                },
+
+                stopTimer() {
+                    clearInterval(this.timer.interval);
+                    this.running = false;
+                    this.storeTimerState();
+                },
+
+                storeTimerState() {
+                    localStorage.setItem('timerState', JSON.stringify({
+                        running: this.running,
+                        startTime: this.startTime,
+                        seconds: this.timer.seconds,
+                    }));
+                },
+
+                loadStoredTimer() {
+                    const storedState = localStorage.getItem('timerState');
+                    if (storedState) {
+                        const { running, startTime, seconds } = JSON.parse(storedState);
+                        this.running = running;
+                        this.startTime = startTime;
+                        this.timer.seconds = seconds;
+                        if (running) {
+                        this.timer.interval = setInterval(this.updateTimer, 1000);
+                        }
+                    }
+                },
             },
         })
 
