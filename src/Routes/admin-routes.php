@@ -38,7 +38,6 @@ Route::group(['middleware' => ['web']], function () {
                 ])->name('download-sample-files');
 
                 Route::get('/download-csv', [HelperController::class, 'downloadCsv'])->name('download.csv');
-                Route::get('/get-profiler', [HelperController::class, 'getProfiler'])->name('get.profiler.name');
                 Route::get('/delete-csv', [HelperController::class, 'deleteCSV'])->name('delete.csv.file');
 
                 // import new products
