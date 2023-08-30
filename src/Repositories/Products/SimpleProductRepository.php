@@ -2,9 +2,12 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Storage;
+use Excel;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Webkul\Core\Eloquent\Repository;
+use Illuminate\Support\Facades\Storage;
+use Webkul\Admin\Exports\DataGridExport;
 use Webkul\Admin\Imports\DataGridImport;
 use Illuminate\Support\Facades\{Event, Validator};
 use Webkul\Category\Repositories\CategoryRepository;
@@ -17,6 +20,8 @@ use Webkul\Attribute\Repositories\{AttributeFamilyRepository, AttributeOptionRep
 
 class SimpleProductRepository extends Repository
 {
+    protected $errors = [];
+    protected $dataNotInserted = [];
     /**
      * Create a new repository instance.
      *
@@ -67,6 +72,10 @@ class SimpleProductRepository extends Repository
      */
     public function createProduct($requestData, $imageZipName, $product)
     {
+        if (!session()->has('myArray')) {
+            session()->put('myArray', []);
+        }
+
         try {
             $inventory = [];
 
@@ -85,7 +94,6 @@ class SimpleProductRepository extends Repository
 
             $processRecords = (int)$requestData['countOfStartedProfiles'] + (int)$requestData['numberOfCSVRecord'];
 
-
             if ($requestData['numberOfCSVRecord'] > $processCSVRecords) {
                 for ($i = $requestData['countOfStartedProfiles']; $i < $uptoProcessCSVRecords; $i++) {
                     $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName);
@@ -103,7 +111,7 @@ class SimpleProductRepository extends Repository
                     }
                 }
             }
-
+\Log::info(session()->get('myArray'));
             if ($requestData['numberOfCSVRecord'] > 10) {
                 $remainDataInCSV = (int)$requestData['numberOfCSVRecord'] - (int)$processCSVRecords;
             } else {
@@ -184,6 +192,11 @@ class SimpleProductRepository extends Repository
             $createValidation = $this->helperRepository->createProductValidation($csvData, $i);
 
             if (isset($createValidation)) {
+                session()->push('myArray', ['error' => $createValidation['error']]);
+                $this->dataNotInserted =  $csvData;
+
+
+
                 return $createValidation;
             }
 
@@ -198,8 +211,9 @@ class SimpleProductRepository extends Repository
                 $data['attribute_family_id'] = $attributeFamilyData->id;
                 $data['sku'] = $csvData['sku'];
 
+
                 Event::dispatch('catalog.product.create.before');
-                $simpleproductData = $this->productRepository->create($data);
+                $simpleproductData = $this->productRepository->UpdateOrCreate($data);
                 Event::dispatch('catalog.product.create.after', $simpleproductData);
             } else {
                 $simpleproductData = $productData;
@@ -278,7 +292,7 @@ class SimpleProductRepository extends Repository
             $data['categories'] = $categoryID;
             $data['channel'] = core()->getCurrentChannel()->code;
 
-            $dataProfile = app('Webkul\Bulkupload\Repositories\DataFlowProfileRepository')->findOneByfield(['id' => $data['dataFlowProfileRecordId']]);
+            $dataProfile = $dataFlowProfileRecord->profiler;
 
             $data['locale'] = $dataProfile->locale_code;
 
@@ -302,8 +316,7 @@ class SimpleProductRepository extends Repository
                     }
                 }
             } else if (isset($csvData['images'])) {
-                foreach ($individualProductimages as $imageArraykey => $imageURL)
-                {
+                foreach ($individualProductimages as $imageArraykey => $imageURL) {
                     if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
                         $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
 
@@ -320,11 +333,13 @@ class SimpleProductRepository extends Repository
                 }
             }
 
-            $returnRules = $this->helperRepository->validateCSV($requestData['data_flow_profile_id'], $data, $dataFlowProfileRecord, $simpleproductData);
+            $returnRules = $this->helperRepository->validateCSV($data, $dataFlowProfileRecord, $simpleproductData);
 
             $csvValidator = Validator::make($data, $returnRules);
 
             if ($csvValidator->fails()) {
+                session(['value1' => $csvValidator->errors()->getMessages(), 'value2' => $csvData]);
+
                 $errors = $csvValidator->errors()->getMessages();
 
                 $this->helperRepository->deleteProductIfNotValidated($simpleproductData->id);

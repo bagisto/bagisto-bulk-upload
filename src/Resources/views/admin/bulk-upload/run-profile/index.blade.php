@@ -109,7 +109,7 @@
                                     Profiler Name:-
                                 </th>
                                 <td>
-                                    @{{ profilerName }}
+                                    @{{ profilerNames[index] }}
                                 </td>
                             </tr>
 
@@ -224,7 +224,7 @@
                         remainDataInCSV: 1,
                     },
                     errorCsvFile: [],
-                    profilerName: '',
+                    profilerNames: '',
 
                     startTime: 0,
                     timer: {
@@ -421,19 +421,9 @@
 
                     this.$http.get(uri)
                         .then((result) => {
-                            this.errorCsvFile = result.data;
-                        })
-                        .catch(function (error) {
-                            console.log(error);
-                        });
-                },
+                            this.errorCsvFile = result.data.resultArray;
+                            this.profilerNames = result.data.profilerNames;
 
-                getProfilerName: function(item, id) {
-                    const uri = "{{ route('get.profiler.name') }}"
-
-                    this.$http.get(uri, {params: {id: id}})
-                        .then(async (result) => {
-                            this.profilerName[id] = result.data;
                         })
                         .catch(function (error) {
                             console.log(error);

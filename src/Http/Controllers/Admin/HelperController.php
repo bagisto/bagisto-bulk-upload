@@ -193,7 +193,7 @@ class HelperController extends Controller
             } else {
                 return response()->json([
                     "success" => true,
-                    "message" => "CSV Product Successfully Imported"
+                    "message" => "CSV Product Successfully Imported",
                 ]);
             }
         }
@@ -302,32 +302,38 @@ class HelperController extends Controller
     {
         $uploadedFilesError = File::allFiles(public_path('storage/error-csv-file'));
 
-        $uploadedFilesError = array_map(function ($file) {
-            return [
-                    $file->getRelativePath() => asset('storage/error-csv-file/'.$file->getRelativePathname()),
-                    'time' => date('Y-m-d H:i:s', filectime($file)),
-                    'fileName' => $file->getFilename(),
-                ];
-        }, $uploadedFilesError);
-
         $resultArray = collect($uploadedFilesError)
-                    ->groupBy(function ($item) {
-                        return key($item);
-                    })
-                    ->map(function ($group) {
-                        return collect($group)->map(function ($item) {
-                            return [
-                                'link' => $item[key($item)],
-                                'time' => $item['time'],
-                                'fileName' => $item['fileName'],
-                            ];
-                        });
+                ->map(function ($file) {
+                    return [
+                        $file->getRelativePath() => [
+                            'link' => asset('storage/error-csv-file/' . $file->getRelativePathname()),
+                            'time' => date('Y-m-d H:i:s', filectime($file)),
+                            'fileName' => $file->getFilename(),
+                        ],
+                    ];
+                })
+                ->groupBy(function ($item, $key) {
+                    return key($item);
+                })
+                ->map(function ($group) {
+                    return $group->map(function ($item) {
+                        return $item[key($item)];
                     });
+                })
+                ->toArray();
 
-                // Convert the result to a plain array
-        $resultArray = $resultArray->toArray();
+            $ids = array_keys($resultArray);
 
-        return response()->json($resultArray);
+            $profilerName = $this->dataFlowProfileRepository
+                ->get()
+                ->whereIn('id', $ids)
+                ->pluck('name')
+                ->all();
+
+            return response()->json([
+                'resultArray' => $resultArray,
+                'profilerNames' => array_combine($ids, $profilerName),
+            ]);
     }
 
     public function getProfiler()
@@ -337,13 +343,12 @@ class HelperController extends Controller
 
     public function deleteCSV()
     {
-        $fileToDelete = 'error-csv-file/'.request()->input('id').'/'.request()->input('name');
+        $fileToDelete = 'error-csv-file/' . request('id') . '/' . request('name');
 
-        if (Storage::exists($fileToDelete)) {
-            Storage::delete($fileToDelete);
+        if (Storage::delete($fileToDelete)) {
             return response()->json(['message' => 'File deleted successfully']);
-        } else {
-            return response()->json(['message' => 'File not found'], 404);
         }
+
+        return response()->json(['message' => 'File not found'], 404);
     }
 }

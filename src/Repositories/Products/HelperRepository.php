@@ -50,6 +50,7 @@ class HelperRepository extends Repository
     public function validateCSV($records, $dataFlowProfileRecord, $product)
     {
         if ($dataFlowProfileRecord) {
+            
             foreach($records as $data) {
                 $this->rules = array_merge($product->getTypeInstance()->getTypeValidationRules(), [
                     'sku'                => ['required', 'unique:products,sku,' . $product->id, new \Webkul\Core\Contracts\Validations\Slug],
@@ -148,7 +149,7 @@ class HelperRepository extends Repository
                 }
 
                 request()->countOfStartedProfiles =  $loopCount + 1;
-                
+
                 $productsUploaded = $loopCount - request()->errorCount;
 
                 if (request()->numberOfCSVRecord != 0) {
