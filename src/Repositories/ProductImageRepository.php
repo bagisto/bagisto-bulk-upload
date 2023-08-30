@@ -35,29 +35,38 @@ class ProductImageRepository extends Repository
                 $file = 'images.' . $imageId;
                 $dir = 'product/' . $product->id;
 
-                if (str_contains($imageId, 'image_') && request()->hasFile($file)) {
-                    $this->create([
-                        'path' => request()->file($file)->store($dir),
-                        'product_id' => $product->id
-                    ]);
-                } elseif (is_numeric($index = $previousImageIds->search($imageId)) && request()->hasFile($file)) {
-                    if ($imageModel = $this->find($imageId)) {
-                        Storage::delete($imageModel->path);
+                if (str_contains($imageId, 'image_')) {
+                    if (request()->hasFile($file)) {
+                        $this->create([
+                                'path' => request()->file($file)->store($dir),
+                                'product_id' => $product->id
+                            ]);
+                    }
+                } else {
+                    if (is_numeric($index = $previousImageIds->search($imageId))) {
+                        $previousImageIds->forget($index);
                     }
 
-                    $this->update([
-                        'path' => request()->file($file)->store($dir)
-                    ], $imageId);
+                    if (request()->hasFile($file)) {
+                        if ($imageModel = $this->find($imageId)) {
+                            Storage::delete($imageModel->path);
+                        }
+
+                        $this->update([
+                                'path' => request()->file($file)->store($dir)
+                            ], $imageId);
+                    }
                 }
             }
         }
 
-        $previousImageIds->each(function ($imageId) {
+        foreach ($previousImageIds as $imageId) {
             if ($imageModel = $this->find($imageId)) {
                 Storage::delete($imageModel->path);
+
                 $this->delete($imageId);
             }
-        });
+        }
     }
 
     /**
@@ -70,14 +79,19 @@ class ProductImageRepository extends Repository
     public function bulkuploadImages($data, $product, $imageZipName)
     {
         if (isset($data['images'])) {
-            foreach ($data['images'] as $value) {
-                $files = "imported-products/extracted-images/admin/{$data['dataFlowProfileRecordId']}/" . (is_null($imageZipName) ? '' : "{$imageZipName['dirname']}/") . basename($value);
-                $destination = "product/{$product->id}/" . basename($value);
+            foreach($data['images'] as $key => $value) {
+                if ( ! is_null($imageZipName)) {
+                    $files = "imported-products/extracted-images/admin/".$data['dataFlowProfileRecordId'].'/'. $imageZipName['dirname'].'/'.basename($value);
+                } else {
+                    $files = "imported-products/extracted-images/admin/".$data['dataFlowProfileRecordId'].'/'.basename($value);
+                }
+
+                $destination = "product/".$product->id.'/'.basename($value);
 
                 Storage::copy($files, $destination);
 
                 $this->create([
-                    'path' => "product/{$product->id}/" . basename($value),
+                    'path' => 'product/' . $product->id .'/'. basename($value),
                     'product_id' => $product->id
                 ]);
             }

@@ -65,58 +65,101 @@ class VirtualProductRepository extends Repository
      */
     public function createProduct($requestData, $imageZipName)
     {
-        try {
+        try  {
             $inventory = [];
-            $dataFlowProfileRecord = $this->importProductRepository->findOneByField('data_flow_profile_id', $requestData['data_flow_profile_id']);
+
+            $dataFlowProfileRecord = $this->importProductRepository->findOneByField
+            ('data_flow_profile_id', $requestData['data_flow_profile_id']);
+
             $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
 
-            $processCSVRecords = ($requestData['totalNumberOfCSVRecord'] < 1000) ? $requestData['totalNumberOfCSVRecord'] / ($requestData['totalNumberOfCSVRecord'] / 10) : $requestData['totalNumberOfCSVRecord'] / ($requestData['totalNumberOfCSVRecord'] / 100);
+            if ($requestData['totalNumberOfCSVRecord'] < 1000) {
+                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/10);
+            } else {
+                $processCSVRecords = $requestData['totalNumberOfCSVRecord']/($requestData['totalNumberOfCSVRecord']/100);
+            }
 
-            $uptoProcessCSVRecords = $requestData['countOfStartedProfiles'] + (($requestData['numberOfCSVRecord'] > $processCSVRecords) ? 10 : 0);
-            $processRecords = $requestData['countOfStartedProfiles'] + $requestData['numberOfCSVRecord'];
+            $uptoProcessCSVRecords = (int)$requestData['countOfStartedProfiles'] + 10;
+            $processRecords = (int)$requestData['countOfStartedProfiles'] + (int)$requestData['numberOfCSVRecord'];
 
-            for ($i = $requestData['countOfStartedProfiles']; $i < $uptoProcessCSVRecords; $i++) {
-                $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName);
-                if ($invalidateProducts) {
-                    return $invalidateProducts;
+            if ($requestData['numberOfCSVRecord'] > $processCSVRecords) {
+                for ($i = $requestData['countOfStartedProfiles']; $i < $uptoProcessCSVRecords; $i++) {
+                    $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName);
+
+                    if (isset($invalidateProducts) && !empty($invalidateProducts)) {
+                        return $invalidateProducts;
+                    }
+                }
+            } else if ($requestData['numberOfCSVRecord'] <= 10) {
+                for ($i = $requestData['countOfStartedProfiles']; $i < $processRecords; $i++) {
+                    $invalidateProducts = $this->store($csvData[$i], $i, $dataFlowProfileRecord, $requestData, $imageZipName);
+
+                    if (isset($invalidateProducts) && !empty($invalidateProducts)) {
+                        return $invalidateProducts;
+                    }
                 }
             }
 
-            $remainDataInCSV = ($requestData['numberOfCSVRecord'] > 10) ? $requestData['numberOfCSVRecord'] - $processCSVRecords : 0;
-
-            if ($requestData['errorCount'] > 0) {
-                $uptoProcessCSVRecords = $requestData['totalNumberOfCSVRecord'] - $requestData['errorCount'];
+            if ($requestData['numberOfCSVRecord'] > 10) {
+                $remainDataInCSV = (int)$requestData['numberOfCSVRecord'] - (int)$processCSVRecords;
             } else {
-                $uptoProcessCSVRecords = $processRecords;
+                $remainDataInCSV = 0;
+
+                if($requestData['errorCount'] > 0) {
+                    $uptoProcessCSVRecords = $requestData['totalNumberOfCSVRecord'] - $requestData['errorCount'];
+                } else {
+                    $uptoProcessCSVRecords = $processRecords;
+                }
             }
 
             $requestData['countOfStartedProfiles'] = $i;
 
-            return [
+            $dataToBeReturn = [
                 'remainDataInCSV' => $remainDataInCSV,
                 'productsUploaded' => $uptoProcessCSVRecords,
                 'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
             ];
+
+            return $dataToBeReturn;
         } catch(\Exception $e) {
             Log::error('virtual create product log: '. $e->getMessage());
 
-            $categoryError = explode('[', $e->getMessage());
-            $categorySlugError = explode(']', $e->getMessage());
+            $categoryError = explode('[' ,$e->getMessage());
+            $categorySlugError = explode(']' ,$e->getMessage());
             $requestData['countOfStartedProfiles'] =  $i + 1;
             $productsUploaded = $i - $requestData['errorCount'];
 
-            $remainDataInCSV = ($requestData['numberOfCSVRecord'] != 0) ? $requestData['totalNumberOfCSVRecord'] - $requestData['countOfStartedProfiles'] : 0;
+            if ($requestData['numberOfCSVRecord'] != 0) {
+                $remainDataInCSV = (int)$requestData['totalNumberOfCSVRecord'] - (int)$requestData['countOfStartedProfiles'];
+            } else {
+                $remainDataInCSV = 0;
+            }
 
-            $error = (strpos($e->getMessage(), 'No query results for model ') === 0)
-                ? "Invalid Category Slug: " . $categorySlugError[1]
-                : (isset($e->errorInfo) ? $e->errorInfo[2] : $e->getMessage());
+            if ($categoryError[0] == "No query results for model ") {
+                $dataToBeReturn = array(
+                    'remainDataInCSV' => $remainDataInCSV,
+                    'productsUploaded' => $productsUploaded,
+                    'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
+                    'error' => "Invalid Category Slug: " . $categorySlugError[1],
+                );
+                $categoryError[0] = null;
+            } else if (isset($e->errorInfo)) {
+                $dataToBeReturn = array(
+                    'remainDataInCSV' => $remainDataInCSV,
+                    'productsUploaded' => $productsUploaded,
+                    'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
+                    'error' => $e->errorInfo[2],
+                );
+            } else {
+                $dataToBeReturn = array(
+                    'remainDataInCSV' => $remainDataInCSV,
+                    'productsUploaded' => $productsUploaded,
+                    'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
+                    'error' => $e->getMessage(),
+                );
+            }
 
-            return [
-                'remainDataInCSV' => $remainDataInCSV,
-                'productsUploaded' => $productsUploaded,
-                'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
-                'error' => $error,
-            ];
+            return $dataToBeReturn;
         }
     }
 

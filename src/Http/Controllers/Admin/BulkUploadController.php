@@ -63,16 +63,9 @@ class BulkUploadController extends Controller
 
     public function getProfiler()
     {
-        // $profiles = $this->importProductRepository->with('profiler')->get()
-        //             ->filter(fn($profile) => ! $profile->profiler->run_status)
-        //             ->pluck('profiler');
-
-        // return view($this->_config['view'], compact('profiles'));
-
-        $profiles = $this->importProductRepository->with('profiler')
-            ->whereHas('profiler', fn($query) => $query->where('run_status', false))
-            ->get()
-            ->pluck('profiler');
+        $profiles = $this->importProductRepository->with('profiler')->get()
+                    ->filter(fn($profile) => ! $profile->profiler->run_status)
+                    ->pluck('profiler');
 
         return view($this->_config['view'], compact('profiles'));
     }

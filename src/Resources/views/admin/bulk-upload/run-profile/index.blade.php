@@ -84,7 +84,7 @@
                     :class="{ disabled: isDisabled }"
                     :disabled="isDisabled"
                     class="btn btn-lg btn-primary mt-10"
-                    @click.prevent="runConsoleCommand"
+                    @click="runConsoleCommand"
                 >
                     {{ __('bulkupload::app.admin.bulk-upload.run-profile.run-command') }}
                 </Span>
@@ -237,8 +237,8 @@
             },
 
             mounted() {
-                // this.resetTimer();
-                // this.stopTimer();
+                this.resetTimer();
+                        this.stopTimer();
                 this.loadStoredTimer();
             },
 
@@ -354,52 +354,45 @@
                 finishProfiler(percent) {
                 },
 
-                runConsoleCommand: function() {
+                runConsoleCommand: function(e) {
 
-                    if (this.data_flow_profile != '' && this.data_flow_profile != 'Please Select') {
-
-                        event.target.disabled = true;
-
-                        this.detectProfile();
-
-                        $("#loaderContainer").show();
-
-                        this.startTimer();
-
-                        localStorage.setItem('requestCompleted', 'waiting');
-
-                        checkRequestStatusInterval = setInterval(this.checkRequestStatus, 5000);
-                        console.log("testuing");
-
-                        const uri = "{{ route('bulk-upload-admin.read-csv-command') }}"
-
-                        this.$http.post(uri, {
-                            data_flow_profile_id: this.data_flow_profile
-                        })
-                        .then((result) => {
-                            console.log(result, "test");
-                            localStorage.setItem('requestCompleted', 'complete'); // Store a flag in local storage
-                        })
-                        .catch(function (error) {
-                            console.log(error);
-                        });
-                    }
-
-                },
-
-                checkRequestStatus: function () {
-                    console.log(localStorage.getItem('requestCompleted'), "working");
-
-                    if (localStorage.getItem('requestCompleted') == 'complete') {
+                    if (e.target.disabled === true) {
                         window.flashMessages = [{
-                            'type': 'alert-success',
-                            'message': 'Products uploaded successfully.'
+                            'type': 'alert-error',
+                            'message': 'Please select file.'
                         }];
 
                         this.$root.addFlashMessages();
 
-                        clearInterval(this.timer.checkRequestStatusInterval);
+                        return ;
+                    }
 
+                    event.target.disabled = true;
+
+                    $("#loaderContainer").show();
+
+                    this.startTimer()
+
+                    this.detectProfile();
+
+                    checkRequestStatusInterval = setInterval(this.checkRequestStatus, 5000);
+
+                    const uri = "{{ route('bulk-upload-admin.read-csv-command') }}"
+
+                    this.$http.post(uri, {
+                        data_flow_profile_id: this.data_flow_profile
+                    })
+                    .then((result) => {
+                        localStorage.setItem('requestCompleted', 'true'); // Store a flag in local storage
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+
+                },
+
+                checkRequestStatus: function () {
+                    if (localStorage.getItem('requestCompleted')) {
                         this.getErrorCsvFile();
 
                         $("#loaderContainer").hide();
@@ -407,11 +400,19 @@
                         this.resetTimer();
                         this.stopTimer();
 
+                        // setInterval(window.location.reload(), 5000);
+
                         localStorage.setItem('requestCompleted', 'false');
 
-                        window.location.reload();
-                    }
+                        clearInterval(this.timer.checkRequestStatusInterval);
 
+                        window.flashMessages = [{
+                            'type': 'alert-error',
+                            'message': 'Products uploaded successfully.'
+                        }];
+
+                        this.$root.addFlashMessages();
+                    }
                 },
 
                 getErrorCsvFile: function(e) {
@@ -422,10 +423,7 @@
                         .then((result) => {
                             this.errorCsvFile = result.data.resultArray;
                             this.profilerNames = result.data.profilerNames;
-<<<<<<< HEAD
 
-=======
->>>>>>> b92a89fd8dcf8e0bb4efcfeef99bf37fef2472ff
                         })
                         .catch(function (error) {
                             console.log(error);
@@ -439,7 +437,7 @@
                         .then((result) => {
 
                             window.flashMessages = [{
-                                'type': 'alert-success',
+                                'type': 'alert-error',
                                 'message': result.data.message
                             }];
 
