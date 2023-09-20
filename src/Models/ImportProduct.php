@@ -13,6 +13,6 @@ class ImportProduct extends Model implements ImportProductContract
 
     public function profiler()
     {
-        return $this->belongsTo(DataFlowProfile::class, 'data_flow_profile_id', 'id');
+        return $this->belongsTo(DataFlowProfile::class, 'bulk_product_importer_id', 'id');
     }
 }

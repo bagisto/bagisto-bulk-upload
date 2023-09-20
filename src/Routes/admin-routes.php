@@ -3,80 +3,65 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Webkul\Bulkupload\Http\Controllers\Admin\HelperController;
-use Webkul\Bulkupload\Http\Controllers\Admin\BulkUploadController;
-use Webkul\Bulkupload\Http\Controllers\Admin\DataFlowProfileController;
+use Webkul\Bulkupload\Http\Controllers\Admin\BulkProductImporterController;
+use Webkul\Bulkupload\Http\Controllers\Admin\UploadFileController;
 
-Route::group(['middleware' => ['web']], function () {
+Route::middleware(['web', 'admin'])
+    ->prefix(config('app.admin_url'))
+    ->group(function () {
+        Route::prefix('bulkupload')->group(function () {
+            Route::prefix('bulkproductimporter')->group(function () {
 
-    Route::prefix(config('app.admin_url'))->group(function () {
+                // Index
+                Route::get('/', [BulkProductImporterController::class, 'index'])
+                    ->name('admin.bulk-upload.bulk-product-importer.index');
 
-        Route::group(['middleware' => ['admin']], function () {
-            Route::prefix('bulkupload')->group(function () {
+                // Store
+                Route::post('/addprofile', [BulkProductImporterController::class, 'store'])
+                    ->name('admin.bulk-upload.bulk-product-importer.add');
 
-                // Bulk Upload Products
-                Route::get('/upload-files', [BulkUploadController::class, 'index'])->defaults('_config', [
-                    'view' => 'bulkupload::admin.bulk-upload.upload-files.index'
-                ])->name('admin.bulk-upload.index');
+                // Edit
+                Route::get('/edit/{id}', [BulkProductImporterController::class, 'edit'])
+                    ->name('admin.bulk-upload.bulk-product-importer.edit');
 
-                Route::get('/run-profile', [BulkUploadController::class, 'getProfiler'])->defaults('_config', [
-                    'view' => 'bulkupload::admin.bulk-upload.run-profile.index'
-                ])->name('admin.run-profile.index');
+                Route::post('/update/{id}', [BulkProductImporterController::class, 'update'])
+                    ->name('admin.bulk-upload.bulk-product-importer.update');
 
-                Route::post('/getprofiles', [BulkUploadController::class, 'getAllDataFlowProfiles'])
-                    ->name('bulk-upload-admin.get-all-profile');
+                // Destroy
+                Route::post('/delete/{id}', [BulkProductImporterController::class, 'destroy'])
+                    ->name('admin.bulk-upload.bulk-product-importer.delete');
 
-                Route::post('/read-csv', [HelperController::class, 'readCSVData'])
-                    ->name('bulk-upload-admin.read-csv');
+                // Mass Destroy
+                Route::post('/massdestroy', [BulkProductImporterController::class, 'massDestroy'])
+                    ->name('admin.bulk-upload.bulk-product-importer.massDelete');
+            });
 
-                Route::post('/read-csv-command', function() {
-                    Artisan::call('upload:products');
-                })->name('bulk-upload-admin.read-csv-command');
+            Route::prefix('uploadfile')->group(function () {
+
+                // Index
+                Route::get('/', [UploadFileController::class, 'index'])
+                    ->name('admin.bulk-upload.upload-file.index');
 
                 // Download Sample Files
-                Route::post('/download',[HelperController::class, 'downloadFile'])->defaults('_config',[
-                    'view' => 'bulkupload::admin.bulk-upload.upload-files.index'
-                ])->name('download-sample-files');
+                Route::post('/download-sample-file',[UploadFileController::class, 'downloadSampleFile'])
+                    ->name('admin.bulk-upload.upload-file.download-sample-files');
 
-                Route::get('/download-csv', [HelperController::class, 'downloadCsv'])->name('download.csv');
-                Route::get('/get-profiler', [HelperController::class, 'getProfiler'])->name('get.profiler.name');
-                Route::get('/delete-csv', [HelperController::class, 'deleteCSV'])->name('delete.csv.file');
+                Route::post('/import-products-file', [UploadFileController::class, 'storeProductsFile'])
+                    ->name('admin.bulk-upload.upload-file.import-products-file');
 
-                // import new products
-                Route::post('/importnew', [HelperController::class, 'importNewProductsStore'])->defaults('_config',[
-                    'view' => 'bulkupload::admin.bulk-upload.upload-files.index'
-                ])->name('import-new-products-form-submit');
+                Route::post('/getprofiles', [BulkUploadController::class, 'getAllBulkProductImporter'])
+                    ->name('admin.bulk-upload.upload-file.get-all-profile');
 
-                Route::prefix('dataflowprofile')->group(function () {
-                    Route::get('/', [DataFlowProfileController::class, 'index'])->defaults('_config', [
-                        'view' => 'bulkupload::admin.bulk-upload.data-flow-profile.index'
-                    ])->name('admin.dataflow-profile.index');
+                // Route::get('/', [BulkProductImporterController::class, 'index'])->defaults('_config', [
+                //     'view' => 'bulkupload::admin.bulk-upload.bulk-product-importer.index'
+                // ])->name('admin.bulk-upload.upload-file.index');
 
-                    Route::post('/addprofile', [DataFlowProfileController::class, 'store'])->defaults('_config', [
-                        'view' => 'bulkupload::admin.bulk-upload.data-flow-profile.index'
-                    ])->name('bulkupload.bulk-upload.dataflow.add-profile');
+                // Store
+                // admin.bulk-upload.upload-file.index
+                // Route::post('/addprofile', [BulkProductImporterController::class, 'store'])
+                //     ->name('admin.bulk-upload.bulk-product-importer.add');
 
-                    // edit actions
-                    Route::get('/edit/{id}', [DataFlowProfileController::class, 'edit'])->defaults('_config', [
-                        'view' => 'bulkupload::admin.bulk-upload.data-flow-profile.edit'
-                    ])->name('bulkupload.admin.profile.edit');
-
-                    Route::post('/update/{id}', [DataFlowProfileController::class, 'update'])
-                        ->name('admin.bulk-upload.dataflow.update-profile');
-
-                    // destroy
-                    Route::post('/delete/{id}',[DataFlowProfileController::class, 'destroy'])
-                        ->name('bulkupload.admin.profile.delete');
-
-                    //mass destroy
-                    Route::post('/massdestroy', [DataFlowProfileController::class, 'massDestroy'])->defaults('_config', [
-                        'redirect' => 'admin.dataflow-profile.index'
-                    ])->name('bulkupload.admin.profile.massDelete');
-
-                    Route::post('/runprofile', [HelperController::class, 'runProfile'])->defaults('_config', [
-                        'view' => 'bulkupload::admin.bulk-upload.run-profile.progressbar'
-                    ])->name('bulk-upload-admin.run-profile');
-                });
             });
         });
     });
-});
+

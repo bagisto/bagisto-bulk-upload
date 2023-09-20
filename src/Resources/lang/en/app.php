@@ -10,10 +10,10 @@ return [
         ],
 
         'bulk-upload' => [
-            'index'              => 'Bulkupload',
+            'index'              => 'Bulk-Upload',
             'manage-bulk-upload' => 'Manage Bulk Upload',
 
-            'data-flow-profile' => [
+            'bulk-product-importer' => [
                 'grid'           => 'Profile Grid',
                 'name'           => 'Name',
                 'index'          => 'Data Flow Profile',

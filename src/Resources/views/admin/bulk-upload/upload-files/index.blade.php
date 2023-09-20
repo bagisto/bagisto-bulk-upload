@@ -12,7 +12,7 @@
             <div slot="body">
                 <div class="import-product">
                     <form
-                        action="{{ route('download-sample-files') }}"
+                        action="{{ route('admin.bulk-upload.upload-file.download-sample-files') }}"
                         method="post"
                     >
                         <div class="account-table-content">
@@ -55,7 +55,7 @@
                 <div class="import-new-products">
                     <form
                         method="POST"
-                        action="{{ route('import-new-products-form-submit') }}"
+                        action="{{ route('admin.bulk-upload.upload-file.import-products-file') }}"
                         enctype="multipart/form-data"
                         @submit.prevent="onSubmit"
                     >
@@ -203,7 +203,7 @@
                     onChange: function() {
                         this_this = this;
 
-                        var uri = "{{ route('bulk-upload-admin.get-all-profile') }}"
+                        var uri = "{{ route('admin.bulk-upload.upload-file.get-all-profile') }}"
 
                         this_this.$http.post(uri, {
                             attribute_family_id: this_this.key,

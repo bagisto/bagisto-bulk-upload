@@ -1,7 +1,0 @@
-categories_slug,name,description,short_description,sku,special_price,special_price_from,special_price_to,weight,meta_title,meta_keywords,meta_description,url_key,tax_category_id,new,featured,visible_individually,status,cost,width,height,depth,type,attribute_family_name,super_attributes,super_attribute_option,super_attribute_price,inventory_sources,super_attribute_qty,super_attribute_weight,images,guest_checkout,barcode
-root,Temp1,<p>temp1</p>,<p>fvsdfgs</p>,demounique236,80,2019-05-02,2019-05-20,12,Test Title,Test Keyword,Test Description,temp23,,1,1,1,1,10,34,34,234,configurable,Default,,,,default,,,banner.jpeg,1,1
-,temp33,<p>temp22</p>,<p>temfp2</p>,demounique1532,,,,13,,,,,,,,,1,,,,,variant,Default,"color,size","Red,S",150,default,12,10,,,1
-,sda,<p>temp212</p>,<p>sdag</p>,demounique211,,,,45,,,,,,,,,1,,,,,variant,Default,"color,size","Yellow,S",23,default,13,10,,,1
-,temp35,<p>temp212</p>,<p>teemp2</p>,demounique311,,,,15,,,,,,,,,1,,,,,variant,Default,"color,size","Green,M",400,default,14,10,,,1
-,update,<p>temp212</p>,<p>teemp2</p>,demounique411,,,,16,,,,,,,,,1,,,,,variant,Default,"color,size","White,M",77,default,15,10,,,1
-,temp37,<p>fdgfdsg</p>,<p>teemp2</p>,demounique511,,,,17,,,,,,,,,1,,,,,variant,Default,"color,size","Black,M",400,default,16,10,,,1
