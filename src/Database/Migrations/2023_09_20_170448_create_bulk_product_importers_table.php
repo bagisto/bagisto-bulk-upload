@@ -15,7 +15,6 @@ class CreateBulkProductImportersTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->string('locale_code');
-            $table->boolean('run_status')->default(0);
 
             $table->integer('attribute_family_id')->unsigned();
 

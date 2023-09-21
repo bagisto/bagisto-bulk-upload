@@ -19,12 +19,11 @@ return [
         'route'      => 'admin.bulk-upload.upload-file.index',
         'sort'       => 2,
         'icon-class' => '',
-    ],
-    // [
-    //     'key'        => 'catalog.bulkupload.run-profile',
-    //     'name'       => 'bulkupload::app.admin.bulk-upload.run-profile.index',
-    //     'route'      => 'admin.run-profile.index',
-    //     'sort'       => 3,
-    //     'icon-class' => '',
-    // ]
+    ], [
+        'key'        => 'catalog.bulkupload.run-profile',
+        'name'       => 'bulkupload::app.admin.bulk-upload.run-profile.index',
+        'route'      => 'admin.bulk-upload.import-file.run-profile.index',
+        'sort'       => 3,
+        'icon-class' => '',
+    ]
 ];

@@ -20,6 +20,7 @@ class CreateImportProductsTable extends Migration
             $table->string('upload_link_sample_files');
             $table->boolean('is_samples_available')->default(0);
             $table->string('upload_sample_files');
+            $table->string('file_name');
             $table->string('file_path');
             $table->string('image_path');
 

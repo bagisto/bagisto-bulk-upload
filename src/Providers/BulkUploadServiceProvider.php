@@ -20,7 +20,7 @@ class BulkUploadServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'bulkupload');
 
         $this->publishes([
-            __DIR__ . '/../../publishable/assets' => public_path('themes/default/assets'),
+            __DIR__ . '/../../publishable/assets' => public_path('vendor/webkul/admin/assets'),
         ], 'public');
 
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'bulkupload');

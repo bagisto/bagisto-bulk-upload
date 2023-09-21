@@ -10,7 +10,7 @@ Route::middleware(['web', 'admin'])
     ->prefix(config('app.admin_url'))
     ->group(function () {
         Route::prefix('bulkupload')->group(function () {
-            Route::prefix('bulkproductimporter')->group(function () {
+            Route::prefix('bulk-product-importer')->group(function () {
 
                 // Index
                 Route::get('/', [BulkProductImporterController::class, 'index'])
@@ -36,31 +36,48 @@ Route::middleware(['web', 'admin'])
                     ->name('admin.bulk-upload.bulk-product-importer.massDelete');
             });
 
-            Route::prefix('uploadfile')->group(function () {
+            Route::prefix('upload-file')->group(function () {
 
-                // Index
+                // Route to display the index page for uploading files
                 Route::get('/', [UploadFileController::class, 'index'])
                     ->name('admin.bulk-upload.upload-file.index');
 
-                // Download Sample Files
+                // Route to handle downloading sample files
                 Route::post('/download-sample-file',[UploadFileController::class, 'downloadSampleFile'])
                     ->name('admin.bulk-upload.upload-file.download-sample-files');
 
-                Route::post('/import-products-file', [UploadFileController::class, 'storeProductsFile'])
-                    ->name('admin.bulk-upload.upload-file.import-products-file');
-
-                Route::post('/getprofiles', [BulkUploadController::class, 'getAllBulkProductImporter'])
+                // Route to fetch bulk product importer profiles
+                Route::post('/getprofiles', [UploadFileController::class, 'getBulkProductImporter'])
                     ->name('admin.bulk-upload.upload-file.get-all-profile');
 
-                // Route::get('/', [BulkProductImporterController::class, 'index'])->defaults('_config', [
-                //     'view' => 'bulkupload::admin.bulk-upload.bulk-product-importer.index'
-                // ])->name('admin.bulk-upload.upload-file.index');
+                // Route to import products from uploaded files
+                Route::post('/import-products-file', [UploadFileController::class, 'storeProductsFile'])
+                    ->name('admin.bulk-upload.upload-file.import-products-file');
+            });
 
-                // Store
-                // admin.bulk-upload.upload-file.index
-                // Route::post('/addprofile', [BulkProductImporterController::class, 'store'])
-                //     ->name('admin.bulk-upload.bulk-product-importer.add');
+            Route::prefix('import-product-file')->group(function () {
+                Route::get('/', [UploadFileController::class, 'getImporaterToUploadFile'])
+                    ->name('admin.bulk-upload.import-file.run-profile.index');
 
+                Route::post('/run-profile', [HelperController::class, 'runProfile'])->defaults('_config', [
+                    'view' => 'bulkupload::admin.bulk-upload.run-profile.progressbar'
+                ])->name('admin.bulk-upload.upload-file.run-profile.import-file');
+
+                Route::post('/read-csv', [HelperController::class, 'readCSVData'])
+                    ->name('admin.bulk-upload.upload-file.run-profile.read-csv');
+
+                Route::post('/read-csv-command', function() {
+                    Artisan::call('upload:products');
+                })->name('admin.bulk-upload.upload-file.run-profile.read-csv-command');
+
+                Route::get('/download-csv', [HelperController::class, 'downloadCsv'])
+                    ->name('admin.bulk-upload.upload-file.run-profile.download-csv');
+
+                Route::get('/get-profiler', [HelperController::class, 'getProfiler'])
+                    ->name('admin.bulk-upload.upload-file.run-profile.get-profiler-name');
+
+                Route::get('/delete-csv', [HelperController::class, 'deleteCSV'])
+                    ->name('admin.bulk-upload.upload-file.run-profile.delete-csv-file');
             });
         });
     });

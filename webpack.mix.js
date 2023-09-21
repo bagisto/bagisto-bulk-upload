@@ -1,33 +1,52 @@
-const mix = require("laravel-mix");
+const path = require('path');
+const mix = require('laravel-mix');
 
-if (mix == 'undefined') {
-    const { mix } = require("laravel-mix");
-}
+require('laravel-mix-merge-manifest');
+require('laravel-mix-clean');
 
-require("laravel-mix-merge-manifest");
+const prodPublicPath = path.join('publishable', 'assets');
+const devPublicPath = path.join(
+    '..',
+    '..',
+    '..',
+    'public',
+    'vendor',
+    'webkul',
+    'admin',
+    'assets'
+);
+const publicPath = mix.inProduction() ? prodPublicPath : devPublicPath;
 
-if (mix.inProduction()) {
-    var publicPath = 'publishable/assets';
-} else {
-    var publicPath = '../../../public/themes/default/assets';
-}
+console.log(`Assets will be published in: ${publicPath}`);
 
-mix.setPublicPath(publicPath).mergeManifest();
-mix.disableNotifications();
+const assetsPath = path.join(__dirname, 'src', 'Resources', 'assets');
+const jsPath = path.join(assetsPath, 'js');
+const imagesPath = path.join(assetsPath, 'images');
+const sampleFilePath = path.join(assetsPath, 'sample-files');
 
-mix.js([__dirname + '/src/Resources/assets/js/app.js'], 'js/app.js')
-    .copyDirectory(__dirname + '/src/Resources/assets/images', publicPath + "/images")
-    .sass(__dirname + '/src/Resources/assets/sass/admin.scss', 'css/admin.css')
-    .sass(__dirname + '/src/Resources/assets/sass/default.scss', 'css/default.css')
-    .sass(__dirname + '/src/Resources/assets/sass/velocity.scss', 'css/velocity.css')
+mix.setPublicPath(publicPath)
+    .js(path.join(jsPath, 'app.js'), 'js/bulk-upload-app.js')
+
+    .copy(imagesPath, path.join(publicPath, 'images'))
+
+    .copy(sampleFilePath, path.join(publicPath, 'sample-files'))
+
+    .sass(path.join(assetsPath, 'sass', 'admin.scss'), 'css/bulk-upload-admin.css')
+
+    .clean({
+        cleanOnceBeforeBuildPatterns: [
+            'js/**/*',
+            'css/bulk-upload-admin.css',
+        ],
+    })
+
     .options({
-        processCssUrls: false
-    });
+        processCssUrls: false,
+        clearConsole: mix.inProduction(),
+    })
 
-
-if (! mix.inProduction()) {
-    mix.sourceMaps();
-}
+    .disableNotifications()
+    .mergeManifest();
 
 if (mix.inProduction()) {
     mix.version();

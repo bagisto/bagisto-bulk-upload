@@ -16,7 +16,7 @@ return [
             'bulk-product-importer' => [
                 'grid'           => 'Profile Grid',
                 'name'           => 'Name',
-                'index'          => 'Data Flow Profile',
+                'index'          => 'Bulk Product Importer',
                 'add-profile'    => 'Add Profile',
                 'edit-profile'   => 'Edit Profile',
                 'update-profile' => 'Update',
@@ -51,7 +51,8 @@ return [
                 'csv-file'                 => 'Sample :filetype CSV File',
                 'xls-file'                 => 'Sample :filetype XLS File',
                 'sample-links'             => 'Is Links have samples',
-                'download-sample'          => 'Download Samples',
+                'download-sample'          => 'Download Sample',
+                'sample-file'              => 'Sample Files',
                 'import-products'          => 'Import Products',
                 'is-downloadable'          => 'Is downloadable have files',
                 'sample-available'         => 'Is Samples available',
@@ -66,7 +67,7 @@ return [
                 'profile-deleted'           => 'Profile deleted successfully',
                 'file-format-error'         => 'Invalid File Extension',
                 'all-profile-deleted'       => 'All the selected profiles have been deleted successfully',
-                'data-profile-not-selected' => 'Data Flow Profile not selected',
+                'data-profile-not-selected' => 'Bulk Product Importer not selected',
             ]
         ],
     ],

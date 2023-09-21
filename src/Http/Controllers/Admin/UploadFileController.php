@@ -42,23 +42,155 @@ class UploadFileController extends Controller
     }
 
     /**
+     * Download sample files.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function downloadSampleFile()
+    {
+        if (! empty(request()->download_sample)) {
+            return response()->download(public_path("vendor/webkul/admin/assets/sample-files/".request()->download_sample));
+        }
+
+        session()->flash('error', 'Product type is not available, Please select valid product type');
+
+        return redirect()->route('admin.bulk-upload.upload-file.index');
+    }
+
+    /**
      * Get profiles on basis of attribute family
      *
      * @return array
      */
-    public function getAllBulkProductImporter()
+    public function getBulkProductImporter()
     {
         $dataFlowProfiles = $this->bulkProductImporterRepository->findByField('attribute_family_id', request()->attribute_family_id);
 
         return ['dataFlowProfiles' => $dataFlowProfiles];
     }
 
-    public function getProfiler()
+    /**
+     * store import products for profile execution
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function storeProductsFile()
     {
-        $profiles = $this->importProductRepository->with('profiler')->get()
-                    ->filter(fn($profile) => ! $profile->profiler->run_status)
-                    ->pluck('profiler');
+        $request = request();
+        $importerId = $request->bulk_product_importer_id;
 
-        return view($this->_config['view'], compact('profiles'));
+        $validExtensions = ['csv', 'xls', 'xlsx'];
+        $validImageExtensions = ['zip', 'rar'];
+
+        // Validate the request
+        $request->validate([
+            'file_path'                => 'required',
+            'image_path'               => 'mimetypes:application/zip|max:10000',
+            'attribute_family_id'      => 'required',
+            'bulk_product_importer_id' => 'required',
+        ]);
+
+        $importer = $this->bulkProductImporterRepository->find($importerId);
+
+        if (empty($importer)) {
+            session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.data-profile-not-selected'));
+
+            return back();
+        }
+
+        $product = [
+            'attribute_family_id'      => $request->attribute_family_id,
+            'bulk_product_importer_id' => $importerId,
+            'is_downloadable'          => $request->is_downloadable ? 1 : 0,
+            'is_links_have_samples'    => $request->is_link_have_sample ? 1 : 0,
+            'is_samples_available'     => $request->is_sample ? 1 : 0,
+            'image_path'               => '',
+            'file_path'                => '',
+            'file_name'                => $request->file('file_path')->getClientOriginalName()
+        ];
+
+        $fileStorePath = 'imported-products/admin';
+
+        // Handle link files
+        if ($request->hasFile('link_files')) {
+            $linkFiles = $request->file('link_files');
+
+            if (in_array($linkFiles->getClientOriginalExtension(), $validImageExtensions)) {
+                $product['upload_link_files'] = $linkFiles->storeAs($fileStorePath . '/link-files', uniqid() . '.' . $linkFiles->getClientOriginalExtension());
+            } else {
+                session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.file-format-error'));
+
+                return back();
+            }
+        }
+
+        // Handle link sample files
+        if ($request->is_link_have_sample && $request->hasFile('link_sample_files')) {
+            $linkSampleFiles = $request->file('link_sample_files');
+
+            if (in_array($linkSampleFiles->getClientOriginalExtension(), $validImageExtensions)) {
+                $product['upload_link_sample_files'] = $linkSampleFiles->storeAs($fileStorePath . '/link-sample-files', uniqid() . '.' . $linkSampleFiles->getClientOriginalExtension());
+            } else {
+                session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.file-format-error'));
+
+                return back();
+            }
+        }
+
+        // Handle sample files
+        if ($request->is_sample && $request->hasFile('sample_file')) {
+            $sampleFile = $request->file('sample_file');
+
+            if (in_array($sampleFile->getClientOriginalExtension(), $validImageExtensions)) {
+                $product['upload_sample_files'] = $sampleFile->storeAs($fileStorePath . '/sample-file', uniqid() . '.' . $sampleFile->getClientOriginalExtension());
+            } else {
+                session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.file-format-error'));
+
+                return back();
+            }
+        }
+
+        // Handle image uploads
+        if ($request->hasFile('image_path')) {
+            $uploadedImage = request()->file('image_path');
+
+            if (in_array($uploadedImage->getClientOriginalExtension(), $validImageExtensions)) {
+                $product['image_path'] = $uploadedImage->storeAs($fileStorePath . '/images', uniqid() . '.' . $uploadedImage->getClientOriginalExtension());
+            } else {
+                session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.file-format-error'));
+
+                return back();
+            }
+        }
+
+        // Handle file uploads
+        if ($request->hasFile('file_path')) {
+            $uploadedFile = request()->file('file_path');
+
+            if (in_array($uploadedFile->getClientOriginalExtension(), $validExtensions)) {
+                $product['file_path'] = $uploadedFile->storeAs($fileStorePath . '/files', uniqid() . '.' . $uploadedFile->getClientOriginalExtension());
+            } else {
+                session()->flash('error', trans('bulkupload::app.admin.bulk-upload.messages.file-format-error'));
+
+                return back();
+            }
+        }
+
+        $this->importProductRepository->create($product);
+
+        session()->flash('success', trans('bulkupload::app.admin.bulk-upload.messages.profile-saved'));
+
+        return back();
+    }
+
+    public function getImporaterToUploadFile()
+    {
+        $families = $this->attributeFamilyRepository->all();
+
+        return view('bulkupload::admin.bulk-upload.run-profile.index', compact('families'));
+
+        $profiles = $this->bulkProductImporterRepository->get();
+
+        return view('bulkupload::admin.bulk-upload.run-profile.index', compact('profiles'));
     }
 }
