@@ -281,8 +281,10 @@
                     onChange: function() {
                         var uri = "{{ route('admin.bulk-upload.upload-file.get-all-profile') }}"
 
-                        this.$http.post(uri, {
-                            attribute_family_id: this.key,
+                        this.$http.get(uri, {
+                            params: {
+                            'attribute_family_id': this.key,
+                            }
                         })
                         .then(response => {
                             this.dataFlowProfiles = response.data.dataFlowProfiles;

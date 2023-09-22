@@ -2,6 +2,7 @@
 
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
+use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
 use Webkul\Bulkupload\Repositories\{ImportProductRepository, BulkProductImporterRepository};
 
@@ -183,14 +184,68 @@ class UploadFileController extends Controller
         return back();
     }
 
-    public function getImporaterToUploadFile()
+    public function getFamilyAttributesToUploadFile()
     {
         $families = $this->attributeFamilyRepository->all();
 
         return view('bulkupload::admin.bulk-upload.run-profile.index', compact('families'));
-
-        $profiles = $this->bulkProductImporterRepository->get();
-
-        return view('bulkupload::admin.bulk-upload.run-profile.index', compact('profiles'));
     }
+
+    /**
+     * Get profiles on basis of attribute family
+     *
+     * @return array
+     */
+    public function getProductImporter()
+    {
+        $dataFlowProfiles = $this->bulkProductImporterRepository->findByField('attribute_family_id', request()->attribute_family_id);
+
+        $productImporter = $dataFlowProfiles->filter(function ($dataFlowProfile) {
+            return $dataFlowProfile->import_product->isNotEmpty();
+        });
+
+        return ['dataFlowProfiles' => $productImporter];
+    }
+
+    public function deleteProductFile()
+    {
+        try {
+            $dataFlowProfile = $this->bulkProductImporterRepository->findOrFail(request()->bulk_product_importer_id);
+
+            $dataFlowProfile->import_product()->where('id', request()->product_file_id)->delete();
+
+            return ['importer_product_file' => $dataFlowProfile->import_product];
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Handle the case where the bulk_product_importer_id does not exist
+            return response()->json(['error' => 'Data Flow Profile not found'], 404);
+        }
+    }
+
+    public function readCSVData()
+    {
+        $countCSV = 0;
+
+        $dataFlowProfileRecord = $this->importProductRepository->where([
+            'bulk_product_importer_id' => request()->bulk_product_importer_id,
+            'id' => request()->product_file_id,
+        ])->first();
+
+        if ($dataFlowProfileRecord) {
++
+            $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
+dd($csvData);
+            $countConfig = array_filter($csvData, function ($item) {
+                return $item['type'] === 'configurable';
+            });
+
+            if (count($countConfig)) {
+                $countCSV = count($countConfig);
+            } else {
+                $countCSV = count($csvData);
+            }
+        }
+
+        return $countCSV;
+    }
+
 }

@@ -47,7 +47,7 @@ Route::middleware(['web', 'admin'])
                     ->name('admin.bulk-upload.upload-file.download-sample-files');
 
                 // Route to fetch bulk product importer profiles
-                Route::post('/getprofiles', [UploadFileController::class, 'getBulkProductImporter'])
+                Route::get('/get-profiles', [UploadFileController::class, 'getBulkProductImporter'])
                     ->name('admin.bulk-upload.upload-file.get-all-profile');
 
                 // Route to import products from uploaded files
@@ -56,19 +56,23 @@ Route::middleware(['web', 'admin'])
             });
 
             Route::prefix('import-product-file')->group(function () {
-                Route::get('/', [UploadFileController::class, 'getImporaterToUploadFile'])
+                Route::get('/', [UploadFileController::class, 'getFamilyAttributesToUploadFile'])
                     ->name('admin.bulk-upload.import-file.run-profile.index');
+
+                Route::get('/get-importer', [UploadFileController::class, 'getProductImporter'])
+                    ->name('admin.bulk-upload.upload-file.get-importar');
+
+                Route::post('/delete-file', [UploadFileController::class, 'deleteProductFile'])
+                    ->name('admin.bulk-upload.upload-file.delete');
+
+                Route::post('/read-csv', [UploadFileController::class, 'readCSVData'])
+                    ->name('admin.bulk-upload.upload-file.run-profile.read-csv');
 
                 Route::post('/run-profile', [HelperController::class, 'runProfile'])->defaults('_config', [
                     'view' => 'bulkupload::admin.bulk-upload.run-profile.progressbar'
                 ])->name('admin.bulk-upload.upload-file.run-profile.import-file');
 
-                Route::post('/read-csv', [HelperController::class, 'readCSVData'])
-                    ->name('admin.bulk-upload.upload-file.run-profile.read-csv');
 
-                Route::post('/read-csv-command', function() {
-                    Artisan::call('upload:products');
-                })->name('admin.bulk-upload.upload-file.run-profile.read-csv-command');
 
                 Route::get('/download-csv', [HelperController::class, 'downloadCsv'])
                     ->name('admin.bulk-upload.upload-file.run-profile.download-csv');

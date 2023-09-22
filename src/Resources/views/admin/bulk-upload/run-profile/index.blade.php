@@ -50,26 +50,21 @@
         <div class="run-profile">
             <run-profile-form
                 :families="{{ json_encode($families) }}"
-                :data_flow_profile_id="data_flow_profile_id"
             >
             </run-profile-form>
-
-            <div class="uploading-records" v-if="this.product.totalCSVRecords">
-                <uploadingrecords :percentCount="percent" :uploadedProducts="product.countOfImportedProduct" :errorProduct="product.error" :totalRecords="product.totalCSVRecords" :countOfError="product.countOfError" :remainData="product.remainDataInCSV" ></uploadingrecords>
-            </div>
         </div>
     </script>
 
     <script type="text/x-template" id="run-profile-form-template">
         <div class="run-profile">
 
-            <form @submit.prevent="runProfiler">
+            <form>
                 <div class="control-group">
-                    <label for="export-product-type">
-                        {{ __('bulkupload::app.admin.bulk-upload.run-profile.select-file') }}
+                    <label for="attribute_family_id">
+                        {{ __('admin::app.catalog.products.family') }}
                     </label>
 
-                    <select class="control" @change="getImporter()" id="data-flow-profile" v-model="data_flow_profile_id" name="data_flow_profile">
+                    <select class="control" @change="getImporter()" id="attribute_family_id" v-model="attribute_family_id" name="attribute_family_id">
                         <option>
                             {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
                         </option>
@@ -78,64 +73,52 @@
                             @{{ family.name }}
                         </option>
                     </select>
+                </div>
 
-                    {{-- <div class="page-action">
-                        <button type="submit" :class="{ disabled: isDisabled }" :disabled="isDisabled" class="btn btn-lg btn-primary mt-10">
+                <div class="control-group">
+                    <label for="export-product-type">
+                        {{ __('bulkupload::app.admin.bulk-upload.bulk-product-importer.index') }}
+                    </label>
+
+                    <select class="control" @change="setProductFiles()" id="data-flow-profile" v-model="bulk_product_importer_id" name="bulk_product_importer_id">
+                        <option>
+                            {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
+                        </option>
+
+                        <option v-for="importer in product_importer" :key="importer.id" :value="importer.id">
+                            @{{ importer.name }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="product_file">
+                        {{ __('bulkupload::app.admin.bulk-upload.run-profile.select-file') }}
+                    </label>
+
+                    <select class="control" id="product_file" v-model="product_file_id" name="product_file">
+                        <option>
+                            {{ __('bulkupload::app.admin.bulk-upload.run-profile.please-select') }}
+                        </option>
+
+                        <option v-for="file in product_file" :key="file.id" :value="file.id">
+                            @{{ file.file_name }}
+                            (@{{ formatDateTime(file.created_at) }})
+                        </option>
+                    </select>
+
+                    <div class="page-action" v-if="this.product_file_id != '' && this.product_file_id != 'Please Select'">
+                        <button type="submit" @click="runProfiler" :class="{ disabled: isDisabled }" :disabled="isDisabled" class="btn btn-lg btn-primary mt-10">
                             {{ __('bulkupload::app.admin.bulk-upload.run-profile.run') }}
                         </button>
-                    </div> --}}
+
+                        <span type="submit" @click="deleteFile" class="btn btn-lg btn-primary mt-10">
+                            {{ __('bulkupload::app.admin.bulk-upload.upload-file.delete') }}
+                        </span>
+                    </div>
                 </div>
             </form>
         </div>
-    </script>
-
-    <script type="text/x-template" id="uploadingRecords-template">
-        <ul>
-            <li>
-                <i class="icon check-accent"></i>
-                <span>{{ __('bulkupload::app.admin.bulk-upload.run-profile.profile-execution') }}</span>
-            </li>
-
-            <li v-if="this.countOfError > '0'">
-                <i class="icon cross-accent"></i>
-                <span>{{ __('bulkupload::app.admin.bulk-upload.run-profile.error-count') }}:  @{{this.countOfError}}</span>
-            </li>
-
-            <li v-if="this.countOfError > '0'">
-                <i class="icon cross-accent"></i>
-                <span >
-                {{ __('bulkupload::app.admin.bulk-upload.run-profile.error-in-product') }} :
-                    <label v-for= "error in this.errorProduct" style="display: inline-block; width: 100%; margin-left: 50px;">
-                        <i class="icon icon-crossed"></i>
-                        @{{ error }}
-                    </label>
-                </span>
-            </li>
-
-            <li>
-                <i class="icon check-accent"></i>
-                <span>{{ __('bulkupload::app.admin.bulk-upload.run-profile.warning') }}</span>
-            </li>
-
-            <li>
-                <progress class="progression" v-if="this.remainData > '0'" :value="percentCount" max="100">
-                </progress>
-                <progress class="progression" v-else :value="100" max="100"></progress>
-
-                <span style="vertical-align: 75%;" v-if="this.remainData > '0'"> @{{ this.percentCount}}%</span>
-                <span style="vertical-align: 75%;" v-else> 100% </span>
-            </li>
-
-            <li>
-                <i class="icon check-accent"></i>
-                <span> @{{this.uploadedProducts}}/@{{this.totalRecords}} {{ __('bulkupload::app.admin.bulk-upload.run-profile.products-uploaded') }}</span>
-            </li>
-
-            <li v-if="this.remainData == '0'">
-                <i class="icon finish-icon"></i>
-                <span>{{ __('bulkupload::app.admin.bulk-upload.run-profile.finish') }} </span>
-            </li>
-        </ul>
     </script>
 
     <script>
@@ -144,29 +127,6 @@
 
             data: function() {
                 return {
-                    data_flow_profile_id: '',
-                    percent: 0,
-                    product: {
-                        countOfImportedProduct : 0,
-                        countOfStartedProfiles : 0,
-                        fetchedRecords : 10,
-                        numberOfTimeInitiateProfilerCalled: 0,
-                        totalCSVRecords:'',
-                        dataArray:[],
-                        error: [],
-                        countOfError: 0,
-                        remainDataInCSV: 1,
-                    },
-                    errorCsvFile: [],
-                    profilerNames: '',
-
-                    startTime: 0,
-                    timer: {
-                        seconds: 0,
-                        minutes: 0,
-                        interval: null,
-                    },
-                    running: false,
                 }
             },
         })
@@ -174,51 +134,99 @@
         Vue.component('run-profile-form', {
             template:'#run-profile-form-template',
 
-            props: ['families', 'data_flow_profile_id'],
+            props: ['families'],
 
             data: function() {
                 return {
+                    product_file: [],
+                    product_file_id: '',
+                    product_importer: [],
+                    attribute_family_id: '',
+                    bulk_product_importer_id: '',
                 }
             },
 
             computed: {
-                isDisabled () {
-                    if (this.data_flow_profile_id == '' || this.data_flow_profile_id == 'Please Select') {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                },
+                isDisabled() {
+                    return this.product_file_id === '' || this.product_file_id === 'Please Select';
+                }
             },
 
             methods: {
-                getImporter: function() {
-                    if (this.data_flow_profile_id != '' && this.data_flow_profile_id != 'Please Select') {
-                        var uri = "{{ route('admin.bulk-upload.upload-file.get-all-profile') }}"
+                async getImporter() {
+                    if (this.attribute_family_id === '' || this.attribute_family_id === 'Please Select') {
+                        return; // Exit early if attribute_family_id is empty or 'Please Select'
+                    }
 
-                        this.$http.post(uri, {
-                            attribute_family_id: this.data_flow_profile_id,
-                        })
-                        .then(response => {
-                            console.log(response.data.dataFlowProfiles);
-                        })
-                        .catch(function(error) {
+                    try {
+                        const uri = "{{ route('admin.bulk-upload.upload-file.get-importar') }}";
+                        const response = await this.$http.get(uri, {
+                            params: {
+                                'attribute_family_id': this.attribute_family_id,
+                            }
                         });
 
+                        this.product_importer = response.data.dataFlowProfiles;
+                    } catch (error) {
+                        // Handle errors here if needed
                     }
                 },
-            }
-        })
 
-        Vue.component('uploadingrecords', {
-            template:'#uploadingRecords-template',
-            props: ['percentCount', 'uploadedProducts','errorProduct','totalRecords', 'countOfError', 'remainData'],
-            data: function() {
-                return {
-                    percentage: this.percentCount,
-                }
-            },
-        })
+                setProductFiles() {
+                    if (this.bulk_product_importer_id === '' || this.bulk_product_importer_id === 'Please Select') {
+                        return; // Exit early if bulk_product_importer_id is empty or 'Please Select'
+                    }
+
+                    const selectedProfile = this.product_importer.find(obj => obj.id === this.bulk_product_importer_id);
+
+                    if (selectedProfile) {
+                        this.product_file = selectedProfile.import_product;
+                    }
+                },
+
+                async deleteFile() {
+                    if (this.product_file_id === '' || this.product_file_id === 'Please Select') {
+                        return; // Exit early if product_file_id is empty or 'Please Select'
+                    }
+                    this.product_file_id = '';
+
+                    try {
+                        const uri = "{{ route('admin.bulk-upload.upload-file.delete') }}";
+                        const response = await this.$http.post(uri, {
+                            bulk_product_importer_id: this.bulk_product_importer_id,
+                            product_file_id: this.product_file_id,
+                        });
+
+                        this.product_file = response.data.importer_product_file;
+                    } catch (error) {
+                        // Handle errors here if needed
+                    }
+                },
+
+                formatDateTime: function(value) {
+                    const dateTime = new Date(value);
+
+                    return dateTime.toLocaleString(); // Adjust the format as needed
+                },
+
+                runProfiler: function(e) {
+                    const id =this.product_file_id
+                    this.product_file_id = '';
+
+                    const uri = "{{ route('admin.bulk-upload.upload-file.run-profile.read-csv') }}";
+
+                    this.$http.post(uri, {
+                        product_file_id: id,
+                        bulk_product_importer_id: this.bulk_product_importer_id
+                    })
+                    .then((result) => {
+                        console.log(result);
+                    })
+                    .catch(function (error) {
+                    });
+                },
+            }
+        });
     </script>
 
 @endpush

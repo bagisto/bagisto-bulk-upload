@@ -42,6 +42,10 @@ return [
                 'products-uploaded' => 'Products Uploaded',
             ],
 
+            'upload-file'       => [
+                'delete'    => 'Delete File',
+            ],
+
             'upload-files' => [
                 'file'                     => 'CSV/XLS/XLSX file',
                 'save'                     => 'Save',
