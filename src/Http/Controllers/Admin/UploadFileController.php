@@ -2,9 +2,11 @@
 
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
+use Illuminate\Support\Facades\Bus;
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
 use Webkul\Bulkupload\Repositories\{ImportProductRepository, BulkProductImporterRepository};
+use Webkul\Bulkupload\Jobs\ProductUploadJob;
 
 class UploadFileController extends Controller
 {
@@ -223,29 +225,132 @@ class UploadFileController extends Controller
 
     public function readCSVData()
     {
-        $countCSV = 0;
-
-        $dataFlowProfileRecord = $this->importProductRepository->where([
+        $productFileRecord = $this->importProductRepository->where([
             'bulk_product_importer_id' => request()->bulk_product_importer_id,
             'id' => request()->product_file_id,
         ])->first();
 
-        if ($dataFlowProfileRecord) {
-+
-            $csvData = (new DataGridImport)->toArray($dataFlowProfileRecord->file_path)[0];
-dd($csvData);
-            $countConfig = array_filter($csvData, function ($item) {
-                return $item['type'] === 'configurable';
-            });
+        if (! $productFileRecord) {
+            return response()->json([
+                'error'   => true,
+                'message' => 'Selected File not found.'
+            ]);
+        }
 
-            if (count($countConfig)) {
-                $countCSV = count($countConfig);
-            } else {
-                $countCSV = count($csvData);
+        $csvData = (new DataGridImport)->toArray($productFileRecord->file_path)[0];
+
+        $countConfig = count(array_filter($csvData, function ($item) {
+            return $item['type'] === 'configurable';
+        }));
+
+        $countCSV = ($countConfig > 0) ? $countConfig : count($csvData);
+
+        if (! $countCSV) {
+            // Handle the case when $countCSV is false (or any condition you need).
+            return response()->json([
+                "success" => false,
+                "message" => "No CSV Data to Import"
+            ]);
+        }
+
+        $imageZipName = null;
+
+        if (isset($productFileRecord->image_path) && !empty($productFileRecord->image_path)) {
+            $imageZipName = $this->storeImageZip($productFileRecord);
+        }
+
+        $chunks = array_chunk($csvData, 100);
+
+        $batch = Bus::batch([])->dispatch();
+
+        $batch->add(new ProductUploadJob($imageZipName, $productFileRecord, $chunks));
+
+        return response()->json([
+            "success" => true,
+            "message" => "CSV Product Successfully Imported"
+        ]);
+    }
+
+    /**
+     * Store and extract images from a zip file, removing any single quotes or double quotes in image filenames.
+     *
+     * @param $dataFlowProfileRecord - The data flow profile record containing image information.
+     * @return array - An array containing information about the extracted images.
+     */
+    public function storeImageZip($dataFlowProfileRecord)
+    {
+        // Create a ZipArchive instance to work with the zip file.
+        $imageZip = new \ZipArchive();
+
+        // Define the path where extracted images will be stored.
+        $extractedPath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id.'/');
+
+        // Check if the zip file can be opened successfully.
+        if ($imageZip->open(storage_path('app/public/'.$dataFlowProfileRecord->image_path))) {
+            $imageZipName = null; // Initialize the variable to store image zip information.
+
+            // Loop through each file in the zip archive.
+            for ($i = 0; $i < $imageZip->numFiles; $i++) {
+                $filename = $imageZip->getNameIndex($i);
+
+                // Extract information about the file, including its dirname.
+                $imageZipName = pathinfo($filename);
+
+                // Ensure the extracted path exists.
+                if (!is_dir($extractedPath.$imageZipName['dirname'])) {
+                    mkdir($extractedPath.$imageZipName['dirname'], 0777, true);
+                }
+            }
+
+            // Extract all files from the zip archive to the specified path.
+            $imageZip->extractTo($extractedPath);
+            $imageZip->close();
+        }
+
+        // List all files in the extracted directory.
+        $listOfImages = scandir($extractedPath.$imageZipName['dirname'].'/');
+
+        // Iterate through the list of images to remove quotes from filenames.
+        foreach ($listOfImages as $key => $imageName) {
+            if (preg_match_all('/[\'"]/', $imageName)) {
+                $fileName = preg_replace('/[\'"]/', '', $imageName);
+
+                // Rename the file to remove quotes from its name.
+                rename($extractedPath.$imageZipName['dirname'].'/'.$imageName, $extractedPath.$imageZipName['dirname'].'/'.$fileName);
             }
         }
 
-        return $countCSV;
+        // Return information about the extracted images.
+        return $imageZipName;
     }
+
+    // public function storeImageZip($dataFlowProfileRecord)
+    // {
+    //     $imageZip = new \ZipArchive();
+
+    //     $extractedPath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id.'/');
+
+    //     if ($imageZip->open(storage_path('app/public/'.$dataFlowProfileRecord->image_path))) {
+    //         for ($i = 0; $i < $imageZip->numFiles; $i++) {
+    //             $filename = $imageZip->getNameIndex($i);
+    //             $imageZipName = pathinfo($filename);
+    //         }
+
+    //         $imageZip->extractTo($extractedPath);
+    //         $imageZip->close();
+    //     }
+
+    //     $listOfImages = scandir($extractedPath.$imageZipName['dirname'].'/');
+
+    //     foreach ($listOfImages as $key => $imageName) {
+    //         if (preg_match_all('/[\'"]/', $imageName)) {
+    //             $fileName = preg_replace('/[\'"]/', '',$imageName);
+
+    //             rename($extractedPath.$imageZipName['dirname'].'/'.$imageName, $extractedPath.$imageZipName['dirname'].'/'.$fileName);
+    //         }
+    //     }
+
+    //     return $imageZipName;
+    // }
 
 }

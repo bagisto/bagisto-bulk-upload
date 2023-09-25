@@ -108,9 +108,9 @@
                     </select>
 
                     <div class="page-action" v-if="this.product_file_id != '' && this.product_file_id != 'Please Select'">
-                        <button type="submit" @click="runProfiler" :class="{ disabled: isDisabled }" :disabled="isDisabled" class="btn btn-lg btn-primary mt-10">
+                        <span type="submit" @click="runProfiler" :class="{ disabled: isDisabled }" :disabled="isDisabled" class="btn btn-lg btn-primary mt-10">
                             {{ __('bulkupload::app.admin.bulk-upload.run-profile.run') }}
-                        </button>
+                        </span>
 
                         <span type="submit" @click="deleteFile" class="btn btn-lg btn-primary mt-10">
                             {{ __('bulkupload::app.admin.bulk-upload.upload-file.delete') }}
@@ -211,7 +211,7 @@
 
                 runProfiler: function(e) {
                     const id =this.product_file_id
-                    this.product_file_id = '';
+                    // this.product_file_id = '';
 
                     const uri = "{{ route('admin.bulk-upload.upload-file.run-profile.read-csv') }}";
 
@@ -220,7 +220,15 @@
                         bulk_product_importer_id: this.bulk_product_importer_id
                     })
                     .then((result) => {
-                        console.log(result);
+
+                        if (! result.data.status) {
+                            window.flashMessages = [{
+                                'type': 'alert-error',
+                                'message': result.data.message
+                            }];
+
+                            this.$root.addFlashMessages()
+                        }
                     })
                     .catch(function (error) {
                     });
