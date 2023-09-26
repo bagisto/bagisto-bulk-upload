@@ -68,20 +68,19 @@ Route::middleware(['web', 'admin'])
                 Route::post('/read-csv', [UploadFileController::class, 'readCSVData'])
                     ->name('admin.bulk-upload.upload-file.run-profile.read-csv');
 
-                Route::post('/run-profile', [HelperController::class, 'runProfile'])->defaults('_config', [
-                    'view' => 'bulkupload::admin.bulk-upload.run-profile.progressbar'
-                ])->name('admin.bulk-upload.upload-file.run-profile.import-file');
-
-
-
-                Route::get('/download-csv', [HelperController::class, 'downloadCsv'])
+                Route::get('/download-csv', [UploadFileController::class, 'downloadCsv'])
                     ->name('admin.bulk-upload.upload-file.run-profile.download-csv');
 
-                Route::get('/get-profiler', [HelperController::class, 'getProfiler'])
+                Route::post('/delete-csv', [UploadFileController::class, 'deleteCSV'])
+                    ->name('admin.bulk-upload.upload-file.run-profile.delete-csv-file');
+
+                Route::get('/get-profiler', [UploadFileController::class, 'getProfiler'])
                     ->name('admin.bulk-upload.upload-file.run-profile.get-profiler-name');
 
-                Route::get('/delete-csv', [HelperController::class, 'deleteCSV'])
-                    ->name('admin.bulk-upload.upload-file.run-profile.delete-csv-file');
+                Route::get('/read-error-file', [UploadFileController::class, 'readErrorFile'])
+                    ->name('admin.bulk-upload.upload-file.run-profile.read-error-file');
+
+
             });
         });
     });

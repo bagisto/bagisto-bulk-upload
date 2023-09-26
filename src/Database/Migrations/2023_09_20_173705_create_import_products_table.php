@@ -23,6 +23,7 @@ class CreateImportProductsTable extends Migration
             $table->string('file_name');
             $table->string('file_path');
             $table->string('image_path');
+            $table->boolean('status')->default(1);
 
             $table->integer('attribute_family_id')->unsigned();
             $table->integer('bulk_product_importer_id')->unsigned();

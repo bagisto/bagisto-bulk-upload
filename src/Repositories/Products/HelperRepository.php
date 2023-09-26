@@ -40,73 +40,60 @@ class HelperRepository extends Repository
      *
      * @param integer $dataFlowProfileId
      * @param array $records
-     * @param  \Webkul\Bulkupload\Contracts\ImportProduct  $dataFlowProfileRecord
      * @param  \Webkul\Product\Contracts\Product  $product
      * @return array
      */
-    public function validateCSV($records, $dataFlowProfileRecord, $product)
+    public function validateCSV($records, $product)
     {
-        if ($dataFlowProfileRecord) {
+        // Initialize rules with type validation rules
+        $this->rules = array_merge($product->getTypeInstance()->getTypeValidationRules(), [
+            'sku'                => ['required', 'unique:products,sku,' . $product->id, new \Webkul\Core\Contracts\Validations\Slug],
+            'special_price_from' => 'nullable|date',
+            'special_price_to'   => 'nullable|date|after_or_equal:special_price_from',
+            'special_price'      => ['nullable', new \Webkul\Core\Contracts\Validations\Decimal, 'lt:price'],
+        ]);
 
-            foreach($records as $data) {
-                $this->rules = array_merge($product->getTypeInstance()->getTypeValidationRules(), [
-                    'sku'                => ['required', 'unique:products,sku,' . $product->id, new \Webkul\Core\Contracts\Validations\Slug],
-                    'special_price_from' => 'nullable|date',
-                    'special_price_to'   => 'nullable|date|after_or_equal:special_price_from',
-                    'special_price'      => ['nullable', new \Webkul\Core\Contracts\Validations\Decimal, 'lt:price'],
-                ]);
-
-                foreach ($product->getEditableAttributes() as $attribute) {
-                    if ($attribute->code == 'sku' || $attribute->type == 'boolean') {
-                        continue;
-                    }
-
-                    $validations = [];
-
-                    if (! isset($this->rules[$attribute->code])) {
-                        array_push($validations, $attribute->is_required ? 'required' : 'nullable');
-                    } else {
-                        $validations = $this->rules[$attribute->code];
-                    }
-
-                    if ($attribute->type == 'text' && $attribute->validation) {
-                        array_push($validations,
-                            $attribute->validation == 'decimal'
-                            ? new \Webkul\Core\Contracts\Validations\Decimal
-                            : $attribute->validation
-                        );
-                    }
-
-                    if ($attribute->type == 'price') {
-                        array_push($validations, new \Webkul\Core\Contracts\Validations\Decimal);
-                    }
-
-                    if ($attribute->is_unique) {
-                        $this->id = $product;
-
-                        array_push($validations, function ($field, $value, $fail) use ($attribute) {
-                            $column = ProductAttributeValue::$attributeTypeFields[$attribute->type];
-
-                            if (! $this->productAttributeValueRepository->isValueUnique($this->id, $attribute->id, $column, request($attribute->code))) {
-                                $fail('The :attribute has already been taken.');
-                            }
-                        });
-                    }
-
-                    $this->rules[$attribute->code] = $validations;
-                }
-
-                $validationCheckForUpdateData = $this->productFlatRepository
-                    ->findWhere(['sku' => $records['sku'], 'url_key' => $records['url_key']]);
-
-                if (is_null($validationCheckForUpdateData) || empty($validationCheckForUpdateData)) {
-                    $urlKeyUniqueness = "unique:product_flat,url_key";
-                    array_push($this->rules["url_key"], $urlKeyUniqueness);
-                }
-
-                return $this->rules;
+        foreach ($product->getEditableAttributes() as $attribute) {
+            if ($attribute->code == 'sku' || $attribute->type == 'boolean') {
+                continue;
             }
+
+            // Initialize validations with required or nullable based on attribute settings
+            $validations = [$attribute->is_required ? 'required' : 'nullable'];
+
+            if ($attribute->type == 'text' && $attribute->validation) {
+                // Add custom validation rules if applicable
+                $validations[] = $attribute->validation == 'decimal' ? new \Webkul\Core\Contracts\Validations\Decimal : $attribute->validation;
+            }
+
+            if ($attribute->type == 'price') {
+                // Add decimal validation for price attributes
+                $validations[] = new \Webkul\Core\Contracts\Validations\Decimal;
+            }
+
+            if ($attribute->is_unique) {
+                // Add unique validation for unique attributes
+                $validations[] = function ($field, $value, $fail) use ($attribute, $product) {
+                    $column = ProductAttributeValue::$attributeTypeFields[$attribute->type];
+                    if (! $this->productAttributeValueRepository->isValueUnique($product, $attribute->id, $column, request($attribute->code))) {
+                        $fail('The :attribute has already been taken.');
+                    }
+                };
+            }
+
+            // Assign validations to the rules array
+            $this->rules[$attribute->code] = $validations;
         }
+
+        // Check for URL key uniqueness if not found in update data
+        $validationCheckForUpdateData = $this->productFlatRepository
+            ->findWhere(['sku' => $records['sku'], 'url_key' => $records['url_key']]);
+
+        if (empty($validationCheckForUpdateData)) {
+            $this->rules["url_key"][] = "unique:product_flat,url_key";
+        }
+
+        return $this->rules;
     }
 
     /**

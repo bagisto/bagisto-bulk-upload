@@ -32,6 +32,7 @@ class ProductUploadJob implements ShouldQueue
     public function handle()
     {
         $simpleProductRepository = app('Webkul\Bulkupload\Repositories\Products\SimpleProductRepository');
+        $downloadableProductRepository = app('Webkul\Bulkupload\Repositories\Products\DownloadableProductRepository');
 
         $errorArray = [];
         $records = [];
@@ -45,32 +46,31 @@ class ProductUploadJob implements ShouldQueue
                     case "simple":
                         $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
 
-                        return response()->json($simpleProduct);
-
+                        break;
                     case "virtual":
-                        $virtualProduct = $this->virtualProductRepository->createProduct(request()->all(), $imageZipName);
+                        $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
 
-                        return response()->json($virtualProduct);
+                        break;
                     case "downloadable":
-                        $downloadableProduct =  $this->downloadableProductRepository->createProduct(request()->all(), $imageZipName);
+                        $uploadedProduct = $downloadableProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
 
-                        return response()->json($downloadableProduct);
+                        break;
                     case "grouped":
-                        $groupedProduct = $this->groupedProductRepository->createProduct(request()->all(), $imageZipName);
+                        $uploadedProduct = $groupedProductRepository->createProduct(request()->all(), $imageZipName);
 
-                        return response()->json($groupedProduct);
+                        break;
                     case "booking":
-                        $bookingProduct = $this->bookingProductRepository->createProduct(request()->all(), $imageZipName);
+                        $uploadedProduct = $bookingProductRepository->createProduct(request()->all(), $imageZipName);
 
-                        return response()->json($bookingProduct);
+                        break;
                     case "bundle":
-                        $bundledProduct = $this->bundledProductRepository->createProduct(request()->all(), $imageZipName);
+                        $uploadedProduct = $bundledProductRepository->createProduct(request()->all(), $imageZipName);
 
-                        return response()->json($bundledProduct);
+                        break;
                     case "configurable" OR "variant":
-                        $configurableProduct = $this->configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
+                        $uploadedProduct = $configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
 
-                        return response()->json($configurableProduct);
+                        break;
                 }
 
                 if (! empty($uploadedProduct)) {

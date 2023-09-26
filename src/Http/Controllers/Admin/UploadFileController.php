@@ -2,7 +2,9 @@
 
 namespace Webkul\Bulkupload\Http\Controllers\Admin;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
 use Webkul\Bulkupload\Repositories\{ImportProductRepository, BulkProductImporterRepository};
@@ -203,6 +205,7 @@ class UploadFileController extends Controller
         $dataFlowProfiles = $this->bulkProductImporterRepository->findByField('attribute_family_id', request()->attribute_family_id);
 
         $productImporter = $dataFlowProfiles->filter(function ($dataFlowProfile) {
+
             return $dataFlowProfile->import_product->isNotEmpty();
         });
 
@@ -239,6 +242,8 @@ class UploadFileController extends Controller
 
         $csvData = (new DataGridImport)->toArray($productFileRecord->file_path)[0];
 
+        // $productFileRecord->update(['status' => 0]);
+
         $countConfig = count(array_filter($csvData, function ($item) {
             return $item['type'] === 'configurable';
         }));
@@ -264,6 +269,8 @@ class UploadFileController extends Controller
         $batch = Bus::batch([])->dispatch();
 
         $batch->add(new ProductUploadJob($imageZipName, $productFileRecord, $chunks));
+
+        // $productFileRecord->delete();
 
         return response()->json([
             "success" => true,
@@ -324,33 +331,83 @@ class UploadFileController extends Controller
         return $imageZipName;
     }
 
-    // public function storeImageZip($dataFlowProfileRecord)
-    // {
-    //     $imageZip = new \ZipArchive();
+    public function downloadCsv()
+    {
+        $folderPath = public_path('storage/error-csv-file');
 
-    //     $extractedPath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id.'/');
+        // Check if the folder exists
+        if (!File::exists($folderPath)) {
+            // If it doesn't exist, create it
+            File::makeDirectory($folderPath, 0755, true, true);
+        }
 
-    //     if ($imageZip->open(storage_path('app/public/'.$dataFlowProfileRecord->image_path))) {
-    //         for ($i = 0; $i < $imageZip->numFiles; $i++) {
-    //             $filename = $imageZip->getNameIndex($i);
-    //             $imageZipName = pathinfo($filename);
-    //         }
+        $uploadedFilesError = File::allFiles($folderPath);
 
-    //         $imageZip->extractTo($extractedPath);
-    //         $imageZip->close();
-    //     }
+        $resultArray = collect($uploadedFilesError)
+                ->map(function ($file) {
+                    return [
+                        $file->getRelativePath() => [
+                            'link' => asset('storage/error-csv-file/' . $file->getRelativePathname()),
+                            'time' => date('Y-m-d H:i:s', filectime($file)),
+                            'fileName' => $file->getFilename(),
+                        ],
+                    ];
+                })
+                ->groupBy(function ($item) {
+                    return key($item);
+                })
+                ->map(function ($group) {
+                    return $group->map(function ($item) {
+                        return $item[key($item)];
+                    });
+                })
+                ->toArray();
 
-    //     $listOfImages = scandir($extractedPath.$imageZipName['dirname'].'/');
+            $ids = array_keys($resultArray);
 
-    //     foreach ($listOfImages as $key => $imageName) {
-    //         if (preg_match_all('/[\'"]/', $imageName)) {
-    //             $fileName = preg_replace('/[\'"]/', '',$imageName);
+            $profilerName = $this->bulkProductImporterRepository
+                ->get()
+                ->whereIn('id', $ids)
+                ->pluck('name')
+                ->all();
 
-    //             rename($extractedPath.$imageZipName['dirname'].'/'.$imageName, $extractedPath.$imageZipName['dirname'].'/'.$fileName);
-    //         }
-    //     }
+            return response()->json([
+                'resultArray' => $resultArray,
+                'profilerNames' => array_combine($ids, $profilerName),
+            ]);
+    }
 
-    //     return $imageZipName;
-    // }
+    public function getProfiler()
+    {
+        return $this->bulkProductImporterRepository->find(request()->input('id'))->name;
+    }
 
+    public function deleteCSV()
+    {
+
+        $fileToDelete = 'error-csv-file/' . request('id') . '/' . request('name');
+
+        if (Storage::delete($fileToDelete)) {
+            return response()->json(['message' => 'File deleted successfully']);
+        }
+
+        return response()->json(['message' => 'File not found'], 404);
+    }
+
+    public function readErrorFile()
+    {
+        // Read the CSV file and generate HTML to display product data
+        $csvFilePath = public_path('storage/error-csv-file/' . request()->bulk_product_importer_id . '/' . request()->product_file_id . '/error-file.csv');
+
+        $csvData = [];
+
+        if (($handle = fopen($csvFilePath, 'r')) !== false) {
+            while (($data = fgetcsv($handle)) !== false) {
+                $csvData[] = $data;
+            }
+            fclose($handle);
+        }
+
+        return $csvData;
+    }
 }

@@ -2,16 +2,12 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Log;
 use Storage;
 use Illuminate\Support\Facades\{Event, Validator};
 use Webkul\Product\Repositories\ProductCustomerGroupPriceRepository;
 
-class SimpleProductRepository extends Repository
+class VirtualProductRepository extends Repository
 {
-    protected $errors = [];
-    protected $dataNotInserted = [];
-
     /*
      * Specify Model class name
      *
@@ -23,11 +19,13 @@ class SimpleProductRepository extends Repository
     }
 
     /**
-     * create & update simple-type product
+     * function to store product
      *
+     * @param array $csvData
+     * @param integer $i
+     * @param \Webkul\Bulkupload\Contracts\ImportProduct $dataFlowProfileRecord
      * @param array $requestData
      * @param array $imageZipName
-     * @param array $product
      *
      * @return mixed
      */
@@ -42,20 +40,9 @@ class SimpleProductRepository extends Repository
 
             $product = $this->productRepository->findWhere(['sku' => $csvData['sku']])->first();
 
-            if ($product->type != 'simple') {
-                $errorToBeReturn[] = "Duplicate entry for sku " . $product->sku;
-
-                $dataToBeReturn = [
-                    'error' => $errorToBeReturn,
-                ];
-
-                return $dataToBeReturn;
-            }
-
             $attributeFamilyData = $this->attributeFamilyRepository->findOneByfield(['name' => $csvData['attribute_family_name']]);
 
             if (! $product) {
-
                 Event::dispatch('catalog.product.create.before');
 
                 $product = $this->productRepository->create([
@@ -65,30 +52,32 @@ class SimpleProductRepository extends Repository
                 ]);
 
                 Event::dispatch('catalog.product.create.after', $product);
+            } else {
+                if ($product->type != 'virtual') {
+                    $errorToBeReturn[] = "Duplicate entry for sku " . $product->sku;
+
+                    $dataToBeReturn = [
+                        'error' => $errorToBeReturn,
+                    ];
+
+                    return $dataToBeReturn;
+                }
             }
 
             $data = [];
             $attributeCode = [];
             $attributeValue = [];
 
-            $attributes = $product->getTypeInstance()->getEditableAttributes()->toArray();
+            $editableAttributes = $product->getTypeInstance()->getEditableAttributes()->toArray();
 
             //default attributes
-            foreach ($attributes as $value) {
-                $searchIndex = strtolower($value['code']);
+            foreach ($editableAttributes as $key => $value) {
+                $searchIndex = $value['code'];
 
                 if (array_key_exists($searchIndex, $csvData) && ! is_null($csvData[$searchIndex])) {
-
                     $attributeCode[] = $searchIndex;
 
-                    if ($value['type'] == "select") {
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvData[$searchIndex]]);
-                        $attributeValue[] = $attributeOption['id'];
-                    } elseif ($value['type'] == "checkbox") {
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $value['id'], 'admin_name' => $csvData[$searchIndex]]);
-                        $attributeOptionArray = [$attributeOption['id']];
-                        $attributeValue[] = $attributeOptionArray;
-                    } elseif (in_array($searchIndex, ["color", "size", "brand"])) {
+                    if (in_array($searchIndex, ["color", "size", "brand"])) {
                         $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => ucwords($csvData[$searchIndex])]);
 
                         if ($attributeOption) {
@@ -98,23 +87,21 @@ class SimpleProductRepository extends Repository
                         $attributeValue[] = $csvData[$searchIndex];
                     }
 
-
-
                     $data = array_combine($attributeCode, $attributeValue);
                 }
             }
 
             $inventoryCode = explode(', ', $csvData['inventory_sources']);
 
-            $inventoryId = $this->inventorySourceRepository->whereIn('code', $inventoryCode)->pluck('id')->toArray();
+            $inventoryIds = $this->inventorySourceRepository->whereIn('code', $inventoryCode)->pluck('id')->toArray();
 
             $inventoryData = explode(', ', $csvData['inventories']);
 
-            if (count($inventoryId) != count($inventoryData)) {
-                $inventoryData = array_fill(0, count($inventoryId), 0);
+            if (count($inventoryIds) != count($inventoryData)) {
+                $inventoryData = array_fill(0, count($inventoryIds), 0);
             }
 
-            $data['inventories'] =  array_combine($inventoryId, $inventoryData);
+            $data['inventories'] =  array_combine($inventoryIds, $inventoryData);
 
             if (is_null($csvData['categories_slug']) || empty($csvData['categories_slug'])) {
                 $categoryID = $this->categoryRepository->findBySlugOrFail('root')->id;
@@ -140,9 +127,9 @@ class SimpleProductRepository extends Repository
             $individualProductimages = explode(', ', $csvData['images']);
 
             if (isset($imageZipName)) {
-                $imagePath = 'public/imported-products/extracted-images/admin/' . $dataFlowProfileRecord->id . '/' . $imageZipName['dirname'] . '/';
+                $imageDirectory = 'public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id.'/'.$imageZipName['dirname'].'/';
 
-                $images = Storage::disk('local')->files($imagePath);
+                $images = Storage::disk('local')->files($imageDirectory);
 
                 foreach ($images as $imageArraykey => $imagePath) {
                     $imageName = explode('/', $imagePath);
@@ -157,11 +144,11 @@ class SimpleProductRepository extends Repository
                     if (filter_var(trim($imageURL), FILTER_VALIDATE_URL)) {
                         $imagePath = storage_path('app/public/imported-products/extracted-images/admin/'.$dataFlowProfileRecord->id);
 
-                        if (! file_exists($imagePath)) {
+                        if (!file_exists($imagePath)) {
                             mkdir($imagePath, 0777, true);
                         }
 
-                        $imageFile = $imagePath . '/' . basename($imageURL);
+                        $imageFile = $imagePath.'/'.basename($imageURL);
 
                         file_put_contents($imageFile, file_get_contents(trim($imageURL)));
 
@@ -170,19 +157,20 @@ class SimpleProductRepository extends Repository
                 }
             }
 
-            $returnRules = $this->helperRepository->validateCSV($data, $product);
-            $csvValidator = Validator::make($data, $returnRules);
+            //to check validation
+            $validationRules = $this->helperRepository->validateCSV($data, $product);
+            $csvValidator = Validator::make($data, $validationRules);
 
             if ($csvValidator->fails()) {
                 $errors = $csvValidator->errors()->getMessages();
 
                 $this->helperRepository->deleteProductIfNotValidated($product->id);
 
-                foreach($errors as $error) {
+                foreach($errors as $key => $error) {
                     if ($error[0] == "The url key has already been taken.") {
                         $errorToBeReturn[] = "The url key " . $data['url_key'] . " has already been taken";
                     } else {
-                        $errorToBeReturn[] = str_replace(".", "", $error[0]). " for sku " . $data['sku'];
+                        $errorToBeReturn[] = str_replace(".", "", $error[0]) . " for sku " . $data['sku'];
                     }
                 }
 
@@ -198,16 +186,17 @@ class SimpleProductRepository extends Repository
 
             Event::dispatch('catalog.product.update.before',  $product->id);
 
-            $productFlat = $this->productRepository->update($data, $product->id);
+            $configVirtualProduct = $this->productRepository->update($data, $product->id);
 
-            Event::dispatch('catalog.product.update.after', $productFlat);
+            Event::dispatch('catalog.product.update.after',$configVirtualProduct);
 
             if (isset($imageZipName) || (isset($csvData['images']) && ! empty($csvData['images']))) {
                 $imageZip = isset($imageZipName) ? $imageZipName : null;
                 $this->productImageRepository->bulkuploadImages($data, $product, $imageZip, $dataFlowProfileRecord->id);
             }
+
         } catch(\Exception $e) {
-            Log::error('simple product store function'. $e->getMessage());
+            \Log::error('virtual product store function'. $e->getMessage());
         }
     }
 }
