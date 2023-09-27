@@ -52,7 +52,7 @@ class ProductUploadJob implements ShouldQueue
 
                         break;
                     case "downloadable":
-                        $uploadedProduct = $downloadableProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
+                        $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
 
                         break;
                     case "grouped":

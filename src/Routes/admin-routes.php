@@ -79,8 +79,6 @@ Route::middleware(['web', 'admin'])
 
                 Route::get('/read-error-file', [UploadFileController::class, 'readErrorFile'])
                     ->name('admin.bulk-upload.upload-file.run-profile.read-error-file');
-
-
             });
         });
     });

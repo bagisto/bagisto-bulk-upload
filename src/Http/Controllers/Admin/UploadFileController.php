@@ -190,7 +190,9 @@ class UploadFileController extends Controller
 
     public function getFamilyAttributesToUploadFile()
     {
-        $families = $this->attributeFamilyRepository->all();
+        $uniqueAttributeFamilyIds = $this->importProductRepository->distinct()->pluck('attribute_family_id');
+
+        $families = $this->attributeFamilyRepository->whereIn('id', $uniqueAttributeFamilyIds)->get();
 
         return view('bulkupload::admin.bulk-upload.run-profile.index', compact('families'));
     }
