@@ -32,7 +32,6 @@ class ProductUploadJob implements ShouldQueue
     public function handle()
     {
         $simpleProductRepository = app('Webkul\Bulkupload\Repositories\Products\SimpleProductRepository');
-        $downloadableProductRepository = app('Webkul\Bulkupload\Repositories\Products\DownloadableProductRepository');
 
         $errorArray = [];
         $records = [];
