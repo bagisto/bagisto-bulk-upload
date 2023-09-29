@@ -16,6 +16,7 @@ use Webkul\Bulkupload\Repositories\Products\HelperRepository;
 class SimpleProductRepository extends BaseRepository
 {
     protected $errors = [];
+
     protected $dataNotInserted = [];
 
     /**
@@ -58,9 +59,10 @@ class SimpleProductRepository extends BaseRepository
     /**
      * create & update simple-type product
      *
-     * @param array $requestData
      * @param array $imageZipName
-     * @param array $product
+     * @param array $dataFlowProfileRecord
+     * @param array $csvData
+     * @param int $key
      *
      * @return mixed
      */
@@ -83,8 +85,6 @@ class SimpleProductRepository extends BaseRepository
                 ];
             }
 
-            $attributeFamilyData = $this->attributeFamilyRepository->findOneByfield(['name' => $csvData['attribute_family_name']]);
-
             // Create Product
             if (! $product) {
 
@@ -93,7 +93,7 @@ class SimpleProductRepository extends BaseRepository
                 $product = $this->productRepository->create([
                     'sku' => $csvData['sku'],
                     'type' => $csvData['type'],
-                    'attribute_family_id' => $attributeFamilyData->id,
+                    'attribute_family_id' => $dataFlowProfileRecord->profiler->attribute_family_id,
                 ]);
 
                 Event::dispatch('catalog.product.create.after', $product);
@@ -103,29 +103,75 @@ class SimpleProductRepository extends BaseRepository
             $data = $this->processProductAttributes($csvData, $product);
 
             // Process inventory
-            $this->processProductInventory($csvData, $data);
+            if ($product->type != 'bundle' && $product->type != 'grouped') {
+                $this->processProductInventory($csvData, $data);
+            }
 
             // Process categories
-            $this->processProductCategories($csvData, $data, $dataFlowProfileRecord);
+            $categories = $this->processProductCategories($csvData);
+
+            if (isset($categories[0]['error'])) {
+                $this->helperRepository->deleteProductIfNotValidated($product->id);
+
+                return $categories[0];
+            }
+
+            $data['categories'] = $categories;
+            $data['locale'] = $dataFlowProfileRecord->profiler->locale_code;
+            $data['channel'] = core()->getCurrentChannel()->code;
+
 
             // Process customer group pricing
             $this->processCustomerGroupPricing($csvData, $data, $product);
 
             // Process product images
-            $this->processProductImages($csvData, $imageZipName, $dataFlowProfileRecord, $data);
+            $data['images'] = $this->processProductImages($csvData, $imageZipName, $dataFlowProfileRecord);
 
             if ($product->type == 'downloadable' && isset($csvData['link_titles'])) {
-                $data['downloadable_links'] = $this->addLinksAndSamples($csvData, $dataFlowProfileRecord, $product);
+                $downloadableLinks = $this->addLinksAndSamples($csvData, $dataFlowProfileRecord, $product);
+
+                if (isset($downloadableLinks['error'])) {
+                    $this->helperRepository->deleteProductIfNotValidated($product->id);
+
+                    return $downloadableLinks;
+                }
+
+                $data['downloadable_links'] = $downloadableLinks;
             }
 
             if ($product->type == 'downloadable' && isset($csvData['samples_title'])) {
-                $data['downloadable_samples'] = $this->addSamples($csvData, $dataFlowProfileRecord, $product);
+                $downloadableSamples = $this->addSamples($csvData, $dataFlowProfileRecord, $product);
+
+                if (isset($downloadableSamples['error'])) {
+                    $this->helperRepository->deleteProductIfNotValidated($product->id);
+
+                    return $downloadableSamples;
+                }
+
+                $data['downloadable_samples'] = $downloadableSamples;
+            }
+
+            //prepare bundle options
+            if (isset($csvData['bundle_options'])) {
+                $bundleOptions = json_decode($csvData['bundle_options'], true);
+
+                $data['bundle_options'] = $bundleOptions;
+            }
+
+            // //grouped product links
+            if (isset($csvData['grouped_options'])) {
+                $groupedOptions = json_decode($csvData['grouped_options'], true);
+
+                $data['links'] = $groupedOptions;
+
             }
 
             // Validate product data and handle errors
             $validationErrors = $this->validateProductData($data, $product);
 
             if ($validationErrors) {
+                $this->helperRepository->deleteProductIfNotValidated($product->id);
+
                 return $validationErrors;
             }
 
@@ -135,20 +181,13 @@ class SimpleProductRepository extends BaseRepository
 
             Event::dispatch('catalog.product.update.after', $productFlat);
 
-            // Upload images if necessary
-            // if (isset($imageZipName) || (!empty($csvData['images']))) {
-            //     $imageZip = $imageZipName ?? null;
-            //     $this->productImageRepository->bulkuploadImages($data, $productFlat, $imageZip, $dataFlowProfileRecord->id);
-            // }
-
-            if (isset($imageZipName)) {
-                $this->productImageRepository->bulkuploadImages($data, $productFlat, $imageZipName, $dataFlowProfileRecord->id);
-            } else if (isset($csvData['images'])) {
-                $this->productImageRepository->bulkuploadImages($data, $productFlat, $imageZipName = null, $dataFlowProfileRecord->id);
+            // Upload images
+            if (isset($imageZipName) || (!empty($csvData['images']))) {
+                $imageZip = $imageZipName ?? null;
+                $this->productImageRepository->bulkuploadImages($data, $productFlat, $imageZip, $dataFlowProfileRecord->id);
             }
         } catch(\Exception $e) {
             Log::error('simple product store function '. $e->getMessage());
-            Log::error('simple product store function '. $e);
         }
     }
 
@@ -171,31 +210,28 @@ class SimpleProductRepository extends BaseRepository
 
                 switch ($attribute['type']) {
                     case "select":
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvData[$searchIndex]]);
-                        if ($attributeOption) {
-                            $attributeValue[] = $attributeOption['id'];
-                        }
+                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvValue]);
+
+                        $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
 
                         break;
 
                     case "checkbox":
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $attribute['id'], 'admin_name' => $csvData[$searchIndex]]);
-                        if ($attributeOption) {
-                            $attributeValue[] = [$attributeOption['id']];
-                        }
+                        $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $attribute['id'], 'admin_name' => $csvValue]);
+
+                        $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
 
                         break;
 
                     case in_array($searchIndex, ["color", "size", "brand"]):
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => ucwords($csvData[$searchIndex])]);
-                        if ($attributeOption) {
-                            $attributeValue[] = $attributeOption['id'];
-                        }
+                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => ucwords($csvValue)]);
+
+                        $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
 
                         break;
 
                     default:
-                        $attributeValue[] = $csvData[$searchIndex];
+                        $attributeValue[] = $csvValue;
                         break;
                 }
 
@@ -209,11 +245,11 @@ class SimpleProductRepository extends BaseRepository
     // Process product inventory data and update $data array
     private function processProductInventory($csvData, &$data)
     {
-        $inventoryCode = explode(', ', $csvData['inventory_sources']);
+        $inventoryCode = preg_split('/,\s*|,/', $csvData['inventory_sources']);
 
         $inventoryId = $this->inventorySourceRepository->whereIn('code', $inventoryCode)->pluck('id')->toArray();
 
-        $inventoryData = explode(', ', $csvData['inventories']);
+        $inventoryData = preg_split('/,\s*|,/', $csvData['inventories']);
 
         if (count($inventoryId) != count($inventoryData)) {
             $inventoryData = array_fill(0, count($inventoryId), 0);
@@ -223,21 +259,26 @@ class SimpleProductRepository extends BaseRepository
     }
 
     // Process product categories and update $data array
-    private function processProductCategories($csvData, &$data, $dataFlowProfileRecord)
+    private function processProductCategories($csvData)
     {
         if (is_null($csvData['categories_slug']) || empty($csvData['categories_slug'])) {
             $categoryID = $this->categoryRepository->findBySlugOrFail('root')->id;
         } else {
-            $categoryData = explode(', ', $csvData['categories_slug']);
+            $categoryData = preg_split('/,\s*|,/', $csvData['categories_slug']);
 
             $categoryID = array_map(function ($value) {
-                return $this->categoryRepository->findBySlugOrFail(strtolower($value))->id;
+                try {
+                    return $this->categoryRepository->findBySlugOrFail(strtolower($value))->id;
+
+                } catch(\Exception $e) {
+                    return [
+                        'error' => ['category not found', $e->getMessage()],
+                    ];
+                }
             }, $categoryData);
         }
 
-        $data['locale'] = $dataFlowProfileRecord->profiler->locale_code;
-        $data['channel'] = core()->getCurrentChannel()->code;
-        $data['categories'] = $categoryID;
+        return $categoryID;
     }
 
     // Process customer group pricing and update $data array
@@ -250,9 +291,10 @@ class SimpleProductRepository extends BaseRepository
     }
 
     // Process product images and update $data array
-    private function processProductImages($csvData, $imageZipName, $dataFlowProfileRecord, $data)
+    private function processProductImages($csvData, $imageZipName, $dataFlowProfileRecord)
     {
-        $individualProductimages = explode(', ', $csvData['images']);
+        $individualProductimages = preg_split('/,\s*|,/', $csvData['images']);
+        $productImages = [];
 
         if (isset($imageZipName)) {
             $imagePath = 'public/imported-products/extracted-images/admin/' . $dataFlowProfileRecord->id . '/' . $imageZipName['dirname'] . '/';
@@ -263,7 +305,7 @@ class SimpleProductRepository extends BaseRepository
                 $imageName = explode('/', $imagePath);
 
                 if (in_array(last($imageName), preg_replace('/[\'"]/', '',$individualProductimages))) {
-                    $data['images'][$imageArraykey] = $imagePath;
+                    $productImages[$imageArraykey] = $imagePath;
                 }
             }
         } else if (isset($csvData['images'])) {
@@ -280,22 +322,23 @@ class SimpleProductRepository extends BaseRepository
 
                     file_put_contents($imageFile, file_get_contents(trim($imageURL)));
 
-                    $data['images'][$imageArraykey] = $imageFile;
+                    $productImages[$imageArraykey] = $imageFile;
                 }
             }
         }
+
+        return $productImages;
     }
 
     // Validate product data and handle errors
     private function validateProductData($data, $product)
     {
-        $returnRules = $this->helperRepository->validateCSV($data, $product);
+        $returnRules = $this->helperRepository->validateCSV($product);
+
         $csvValidator = Validator::make($data, $returnRules);
 
         if ($csvValidator->fails()) {
             $errors = $csvValidator->errors()->getMessages();
-
-            $this->helperRepository->deleteProductIfNotValidated($product->id);
 
             $errorToBeReturn = [];
 
@@ -307,14 +350,9 @@ class SimpleProductRepository extends BaseRepository
                 }
             }
 
-            $dataToBeReturn = [
-                // 'remainDataInCSV' => $remainDataInCSV,
-                // 'productsUploaded' => $productsUploaded,
-                // 'countOfStartedProfiles' => $requestData['countOfStartedProfiles'],
+            return [
                 'error' => $errorToBeReturn,
             ];
-
-            return $dataToBeReturn;
         }
 
         return null; // No validation errors
@@ -352,7 +390,9 @@ class SimpleProductRepository extends BaseRepository
         $uniqueLengths = array_unique($dataLengths);
 
         if (! (count($uniqueLengths) === 1)) {
-            return null;
+            return [
+                'error' => ["Please provide correct value for Lnik, Sample Link realted field for sku: {$product->sku}"],
+            ];
         }
 
         $dataLength = reset($uniqueLengths);
@@ -443,32 +483,44 @@ class SimpleProductRepository extends BaseRepository
         $uniqueLengths = array_unique($dataLengths);
 
         if (! (count($uniqueLengths) === 1)) {
-            return null;
+            return [
+                'error' => ["Please provide correct value for Sample realted field for sku: {$product->sku}"],
+            ];
         }
 
         $dataLength = reset($uniqueLengths);
-dd($sampleData);
+
         // Loop through the downloadable sample data
         for ($index = 0; $index < $dataLength; $index++) {
-            $sampleFileType = trim(strtolower($sampleData[$index]));
+            $sampleTitle = $sampleData['samples_title'][$index];
+            $sampleFileType = trim(strtolower($sampleData['sample_type'][$index]));
+            $sampleFileName = $sampleData['sample_files'][$index];
+            $sampleUrl = $sampleData['sample_url'][$index];
+            $sampleSortOrder = $sampleData['sample_sort_order'][$index];
 
-            // Determine the file link or URL for the sample
-            $sampleFileLink = $this->fileOrUrlUpload($dataFlowProfileRecord, $sampleFileType, ($sampleFileType == "url") ? $urlFiles[$index] : $sampleFiles[$index], $product->id, $downloadableLinks, true);
-
+            // Determine the sample file or URL for the link
+            $sampleFileLink = $this->fileOrUrlUpload(
+                $dataFlowProfileRecord,
+                $sampleFileType,
+                ($sampleFileType == "url") ? $sampleUrl : $sampleFileName,
+                $product->id,
+                $downloadableLinks,
+                false
+            );
             // Create the downloadable sample array
             $sample['sample_' . $index] = [
                 core()->getCurrentLocale()->code => [
                     "title" => $sampleTitle,
                 ],
-                "type" => trim($sampleType[$index]),
+                "type" => trim($sampleFileType),
                 "sort_order" => $sampleSortOrder[$index] ?? 0,
             ];
 
-            if (trim($sampleType[$index]) == "url") {
-                $sample['sample_' . $index]['url'] = trim($urlFiles[$index]);
-            } elseif (trim($sampleType[$index]) == "file" && isset($sampleFileLink)) {
+            if (trim($sampleFileType) == "url") {
+                $sample['sample_' . $index]['url'] = trim($sampleUrl);
+            } elseif (trim($sampleFileType) == "file" && isset($sampleFileLink)) {
                 $sample['sample_' . $index]['file'] = trim($sampleFileLink);
-                $sample['sample_' . $index]['file_name'] = trim($sampleFiles[$index]);
+                $sample['sample_' . $index]['file_name'] = trim($sampleFileName);
             }
 
             array_push($sampleNameKey, 'sample_' . $index);

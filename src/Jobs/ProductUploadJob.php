@@ -41,36 +41,7 @@ class ProductUploadJob implements ShouldQueue
         foreach($this->chunk as $data) {
             foreach($data as $key => $arr) {
 
-                switch($arr['type']) {
-                    case "simple":
-                        $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
-
-                        break;
-                    case "virtual":
-                        $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
-
-                        break;
-                    case "downloadable":
-                        $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
-
-                        break;
-                    case "grouped":
-                        $uploadedProduct = $groupedProductRepository->createProduct(request()->all(), $imageZipName);
-
-                        break;
-                    case "booking":
-                        $uploadedProduct = $bookingProductRepository->createProduct(request()->all(), $imageZipName);
-
-                        break;
-                    case "bundle":
-                        $uploadedProduct = $bundledProductRepository->createProduct(request()->all(), $imageZipName);
-
-                        break;
-                    case "configurable" OR "variant":
-                        $uploadedProduct = $configurableProductRepository->createProduct(request()->all(), $imageZipName, $product);
-
-                        break;
-                }
+                $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
 
                 if (! empty($uploadedProduct)) {
                     $isError = true;

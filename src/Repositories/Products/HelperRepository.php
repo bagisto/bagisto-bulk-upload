@@ -2,9 +2,10 @@
 
 namespace Webkul\Bulkupload\Repositories\Products;
 
-use Illuminate\Support\Facades\Validator;
 use Webkul\Core\Eloquent\Repository;
+use Illuminate\Support\Facades\Validator;
 use Webkul\Product\Models\ProductAttributeValue;
+use Webkul\Admin\Validations\ProductCategoryUniqueSlug;
 use Webkul\Product\Repositories\{ProductRepository, ProductFlatRepository, ProductAttributeValueRepository};
 
 class HelperRepository extends Repository
@@ -43,11 +44,12 @@ class HelperRepository extends Repository
      * @param  \Webkul\Product\Contracts\Product  $product
      * @return array
      */
-    public function validateCSV($records, $product)
+    public function validateCSV($product)
     {
         // Initialize rules with type validation rules
         $this->rules = array_merge($product->getTypeInstance()->getTypeValidationRules(), [
             'sku'                => ['required', 'unique:products,sku,' . $product->id, new \Webkul\Core\Contracts\Validations\Slug],
+            'url_key'            => ['required', new ProductCategoryUniqueSlug('products', $product->id)],
             'special_price_from' => 'nullable|date',
             'special_price_to'   => 'nullable|date|after_or_equal:special_price_from',
             'special_price'      => ['nullable', new \Webkul\Core\Contracts\Validations\Decimal, 'lt:price'],
@@ -85,14 +87,6 @@ class HelperRepository extends Repository
             $this->rules[$attribute->code] = $validations;
         }
 
-        // Check for URL key uniqueness if not found in update data
-        $validationCheckForUpdateData = $this->productFlatRepository
-            ->findWhere(['sku' => $records['sku'], 'url_key' => $records['url_key']]);
-
-        if (empty($validationCheckForUpdateData)) {
-            $this->rules["url_key"][] = "unique:product_flat,url_key";
-        }
-
         return $this->rules;
     }
 
@@ -119,8 +113,7 @@ class HelperRepository extends Repository
         try {
             $validateProduct = Validator::make($record, [
                 'type'                  => 'required',
-                'sku'                   => 'required',
-                'attribute_family_name' => 'required'
+                'sku'                   => 'required'
             ]);
 
             if ($validateProduct->fails()) {
