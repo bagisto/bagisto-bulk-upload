@@ -53,8 +53,8 @@ class ProductImageRepository extends Repository
                         }
 
                         $this->update([
-                                'path' => request()->file($file)->store($dir)
-                            ], $imageId);
+                            'path' => request()->file($file)->store($dir)
+                        ], $imageId);
                     }
                 }
             }
@@ -76,22 +76,23 @@ class ProductImageRepository extends Repository
      *
      * @return mixed
      */
-    public function bulkuploadImages($data, $product, $imageZipName)
+    public function bulkuploadImages($data, $product, $imageZipName, $importerId)
     {
         if (isset($data['images'])) {
-            foreach($data['images'] as $key => $value) {
-                if ( ! is_null($imageZipName)) {
-                    $files = "imported-products/extracted-images/admin/".$data['dataFlowProfileRecordId'].'/'. $imageZipName['dirname'].'/'.basename($value);
-                } else {
-                    $files = "imported-products/extracted-images/admin/".$data['dataFlowProfileRecordId'].'/'.basename($value);
-                }
+            foreach($data['images'] as $value) {
 
-                $destination = "product/".$product->id.'/'.basename($value);
+                $importPath = "imported-products/extracted-images/admin/{$importerId}";
+
+                $sourcePath = isset($imageZipName) ? "{$importPath}/{$imageZipName['dirname']}/" : "{$importPath}/";
+
+                $files = $sourcePath . basename($value);
+
+                $destination = "product/{$product->id}/" . basename($value);
 
                 Storage::copy($files, $destination);
 
                 $this->create([
-                    'path' => 'product/' . $product->id .'/'. basename($value),
+                    'path' => $destination,
                     'product_id' => $product->id
                 ]);
             }
