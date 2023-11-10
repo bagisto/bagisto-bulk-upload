@@ -76,6 +76,24 @@ class SimpleProductRepository extends BaseRepository
                 return $createValidation;
             }
 
+            $createProduct = [
+                'sku'                 => $csvData['sku'],
+                'type'                => $csvData['type'],
+                'attribute_family_id' => $dataFlowProfileRecord->profiler->attribute_family_id,
+            ];
+
+            if ($csvData['type'] == 'configurable') {
+                $superAttributes = json_decode($csvData['super_attributes'], true);
+
+                if (!isset($superAttributes['super_attributes']) || empty($superAttributes['super_attributes'])) {
+                    return [
+                        'error' => [trans('admin::app.catalog.products.configurable-error')],
+                    ];
+                }
+
+                $createProduct['super_attributes'] = $superAttributes['super_attributes'];
+            }
+
             // Check for Duplicate SKU
             $product = $this->productRepository->firstWhere('sku', $csvData['sku']);
 
@@ -90,11 +108,7 @@ class SimpleProductRepository extends BaseRepository
 
                 Event::dispatch('catalog.product.create.before');
 
-                $product = $this->productRepository->create([
-                    'sku' => $csvData['sku'],
-                    'type' => $csvData['type'],
-                    'attribute_family_id' => $dataFlowProfileRecord->profiler->attribute_family_id,
-                ]);
+                $product = $this->productRepository->create($createProduct);
 
                 Event::dispatch('catalog.product.create.after', $product);
             }
@@ -103,7 +117,7 @@ class SimpleProductRepository extends BaseRepository
             $data = $this->processProductAttributes($csvData, $product);
 
             // Process inventory
-            if ($product->type != 'bundle' && $product->type != 'grouped') {
+            if ($product->type == 'simple' || $product->type != 'virtual') {
                 $this->processProductInventory($csvData, $data);
             }
 
@@ -163,12 +177,10 @@ class SimpleProductRepository extends BaseRepository
                 $groupedOptions = json_decode($csvData['grouped_options'], true);
 
                 $data['links'] = $groupedOptions;
-
             }
 
             // Validate product data and handle errors
             $validationErrors = $this->validateProductData($data, $product);
-
             if ($validationErrors) {
                 $this->helperRepository->deleteProductIfNotValidated($product->id);
 
@@ -205,38 +217,44 @@ class SimpleProductRepository extends BaseRepository
 
             $csvValue = $csvData[$searchIndex] ?? null;
 
-            if (! is_null($csvValue)) {
-                $attributeCode[] = $searchIndex;
-
-                switch ($attribute['type']) {
-                    case "select":
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvValue]);
-
-                        $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
-
-                        break;
-
-                    case "checkbox":
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $attribute['id'], 'admin_name' => $csvValue]);
-
-                        $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
-
-                        break;
-
-                    case in_array($searchIndex, ["color", "size", "brand"]):
-                        $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => ucwords($csvValue)]);
-
-                        $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
-
-                        break;
-
-                    default:
-                        $attributeValue[] = $csvValue;
-                        break;
-                }
-
-                $data = array_combine($attributeCode, $attributeValue);
+            if (is_null($csvData)) {
+                continue;
             }
+
+            $attributeCode[] = $searchIndex;
+
+            switch ($attribute['type']) {
+                case "select":
+                    $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => $csvValue]);
+
+                    $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
+
+                    break;
+
+                case "checkbox":
+                    $attributeOption = $this->attributeOptionRepository->findOneByField(['attribute_id' => $attribute['id'], 'admin_name' => $csvValue]);
+
+                    $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
+
+                    break;
+
+                case in_array($searchIndex, ["color", "size", "brand"]):
+                    $attributeOption = $this->attributeOptionRepository->findOneByField(['admin_name' => ucwords($csvValue)]);
+
+                    $attributeValue[] = ($attributeOption !== null) ? $attributeOption['id'] : null;
+
+                    break;
+
+                default:
+                    if ($searchIndex == 'url_key') {
+                        $csvValue = strtolower($csvValue);
+                    }
+
+                    $attributeValue[] = $csvValue;
+                    break;
+            }
+
+            $data = array_combine($attributeCode, $attributeValue);
         }
 
         return $data;
@@ -334,7 +352,6 @@ class SimpleProductRepository extends BaseRepository
     private function validateProductData($data, $product)
     {
         $returnRules = $this->helperRepository->validateCSV($product);
-
         $csvValidator = Validator::make($data, $returnRules);
 
         if ($csvValidator->fails()) {
