@@ -6,40 +6,28 @@ use Illuminate\Support\ServiceProvider;
 
 class BulkUploadServiceProvider extends ServiceProvider
 {
+    /**
+     * Bootstrap services.
+     *
+     * @return void
+     */
     public function boot()
     {
-        include __DIR__ . '/../Http/admin-routes.php';
-
-        $this->app->register(ModuleServiceProvider::class);
-        $this->app->register(EventServiceProvider::class);
-
         $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+
+        $this->loadRoutesFrom(__DIR__ . '/../Routes/admin-routes.php');
 
         $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'bulkupload');
 
-        $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'bulkupload');
-
         $this->publishes([
-            __DIR__ . '/../../publishable/assets' => public_path('themes/default/assets'),
+            __DIR__ . '/../../publishable/assets' => public_path('vendor/webkul/admin/assets'),
         ], 'public');
 
-        $this->publishes([
-            __DIR__ . '/../Resources/views/admin/bulk-upload/layouts/nav-aside.blade.php' => resource_path('views/vendor/admin/layouts/nav-left.blade.php'),
-        ]);
+        $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'bulkupload');
 
-        view()->composer(['bulkupload::admin.bulk-upload.upload-files.index'], function ($view) {
-            $items = [];
+        $this->app->register(ModuleServiceProvider::class);
 
-            foreach (config('product_types') as $item) {
-                $item['children'] = [];
-
-                array_push($items, $item);
-            }
-
-            $types = core()->sortItems($items);
-
-            $view->with('productTypes', $types);
-        });
+        $this->app->register(EventServiceProvider::class);
     }
 
     /**

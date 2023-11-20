@@ -1,55 +1,50 @@
 .bulk-upload-icon {
-  width: 48px;
-  height: 48px;
-  display: inline-block;
-  background-size: cover;
-  background-image: url("../images/Icon-Bulk-Upload.svg");
+    width: 48px;
+    height: 48px;
+    display: inline-block;
+    background-image: url("../images/Icon-Bulk-Upload.svg")  no-repeat center/cover;
 }
 
 .active {
-  .bulk-upload-icon {
-    background-image: url("../images/Icon-Bulk-Upload-Active.svg");
-  }
-
-  &.bulk-upload-icon {
-    background-image: url("../images/Icon-Bulk-Upload-Active.svg");
-  }
+    .bulk-upload-icon, &.bulk-upload-icon {
+        background-image: url("../images/Icon-Bulk-Upload-Active.svg");
+    }
 }
 
 progress {
-  margin: 15px 0px 15px 34px;
-  width: 70%;
-  height: 15px;
+    margin: 15px 0px 15px 34px;
+    width: 70%;
+    height: 15px;
 }
 
 .icon {
-  background-size: cover;
-  display: inline-block;
+    background-size: cover;
+    display: inline-block;
 
-  &.check-accent {
-    background-image: url("../images/check-accent.svg");
-    width: 22px;
-    height: 18px;
-  }
+    &.check-accent {
+        background-image: url("../images/check-accent.svg") no-repeat center/cover;
+        width: 22px;
+        height: 18px;
+    }
 
-  &.icon-crossed {
-    width: 18px;
-    height: 15px;
-    background-image: url("../images/Icon-Crossed.svg");
-  }
+    &.icon-crossed, &.cross-accent, &.finish-icon {
+        width: 18px;
+        height: 15px;
+    }
 
-  &.cross-accent {
-    width: 22px;
-    height: 18px;
-    background-image: url("../images/cross-accent.svg");
-  }
+    &.icon-crossed {
+        background: url("../images/Icon-Crossed.svg") no-repeat center/cover;
+    }
 
-  &.finish-icon {
-    width: 22px;
-    height: 18px;
-    background-image: url("../images/finish.svg");
-  }
+    &.cross-accent {
+        background: url("../images/cross-accent.svg") no-repeat center/cover;
+    }
+
+    &.finish-icon {
+        background: url("../images/finish.svg") no-repeat center/cover;
+    }
 }
+
 .ms-15 {
-  margin-left: 15px;
+    margin-left: 15px;
 }
