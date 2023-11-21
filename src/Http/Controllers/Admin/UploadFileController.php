@@ -5,6 +5,7 @@ namespace Webkul\Bulkupload\Http\Controllers\Admin;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
+use League\OAuth1\Client\Server\Tumblr;
 use Webkul\Admin\Imports\DataGridImport;
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
 use Webkul\Bulkupload\Repositories\{ImportProductRepository, BulkProductImporterRepository};
@@ -265,14 +266,16 @@ class UploadFileController extends Controller
         if (isset($productFileRecord->image_path) && !empty($productFileRecord->image_path)) {
             $imageZipName = $this->storeImageZip($productFileRecord);
         }
+
         $chunks = array_chunk($csvData, 100);
 
         $batch = Bus::batch([])->dispatch();
 
-        $batch->add(new ProductUploadJob($imageZipName, $productFileRecord, $chunks));
+        $batch->add(new ProductUploadJob($imageZipName, $productFileRecord, $chunks, $countCSV));
                
         // $productFileRecord->delete();
-
+        session()->put('isFileUploadComplete', true);
+        
         return response()->json([
             "success" => true,
             "message" => "CSV Product Successfully Imported"
@@ -334,8 +337,9 @@ class UploadFileController extends Controller
 
     public function downloadCsv()
     {
+        
         $folderPath = public_path('storage/error-csv-file');
-
+        
         // Check if the folder exists
         if (!File::exists($folderPath)) {
             // If it doesn't exist, create it
@@ -413,15 +417,34 @@ class UploadFileController extends Controller
     }
     
     public function getUploadedProductOrNotUploadedProduct()
-    {
+    {   
+        $data = [];
+        $isFileUploadComplete = false;
+        $status = request()->status;
+        $message = false;
+        
         if (session()->has('notUploadedProduct')) {
             $data['notUploadedProduct'] = session()->get('notUploadedProduct');
         }
 
         if (session()->has('uploadedProduct')) {
             $data['uploadedProduct'] = session()->get('uploadedProduct');
+        }   
+        
+
+        if (session()->has('isFileUploadComplete')) {
+            $isFileUploadComplete = session()->get('isFileUploadComplete');
+        }
+
+        if (session()->has('message')) {
+            $message = session()->get('message');
+            $status = false;
         }
         
-        return response()->json(['message' => $data ,'status' => true], 200);
+        if (empty($data)) {
+            $status = false;
+        }
+
+        return response()->json(['message' => $data ,'status' => $status,'success'=>$message, 'isFileUploadComplete' => $isFileUploadComplete], 200);
     }
 }

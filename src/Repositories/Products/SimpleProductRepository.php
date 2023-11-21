@@ -68,16 +68,15 @@ class SimpleProductRepository extends BaseRepository
      */
     public function createProduct($imageZipName, $dataFlowProfileRecord, $csvData, $key)
     {
+        
+        
         try {
             //Validation
             $createValidation = $this->helperRepository->createProductValidation($csvData, $key);
             
-            // session()->forget('notUploadedProduct');
-            // session()->forget('uploadedProduct');
             
             if (isset($createValidation)) {
-                session()->push('notUploadedProduct', $createValidation);
-                
+
                 return $createValidation;
             }
 
@@ -207,6 +206,7 @@ class SimpleProductRepository extends BaseRepository
 
             Event::dispatch('catalog.product.update.after', $productFlat);
 
+            
             // Upload images
             if (isset($imageZipName) || (!empty($csvData['images']))) {
                 $imageZip = $imageZipName ?? null;

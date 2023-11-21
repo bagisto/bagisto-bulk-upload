@@ -74,7 +74,7 @@ Route::middleware(['web', 'admin'])
                 Route::post('/delete-csv', [UploadFileController::class, 'deleteCSV'])
                     ->name('admin.bulk-upload.upload-file.run-profile.delete-csv-file');
 
-                Route::get('/get-uploaded-product', [UploadFileController::class, 'getUploadedProductOrNotUploadedProduct'])
+                Route::post('/get-uploaded-product', [UploadFileController::class, 'getUploadedProductOrNotUploadedProduct'])
                     ->name('admin.bulk-upload.upload-file.uploaded-product.or-not-uploaded-product');
 
                 Route::get('/get-profiler', [UploadFileController::class, 'getProfiler'])

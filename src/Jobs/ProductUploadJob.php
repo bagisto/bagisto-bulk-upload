@@ -22,6 +22,7 @@ class ProductUploadJob implements ShouldQueue
         protected $imageZipName,
         protected $dataFlowProfileRecord,
         protected $chunk,
+        protected $countCSV,
     )
     {
     }
@@ -31,26 +32,41 @@ class ProductUploadJob implements ShouldQueue
      */
     public function handle()
     {
+        session()->forget('notUploadedProduct');
+        session()->forget('uploadedProduct');
+        session()->forget('isFileUploadComplete');
+        session()->forget('message');
+
         $simpleProductRepository = app('Webkul\Bulkupload\Repositories\Products\SimpleProductRepository');
         $errorArray = [];
         $records = [];
         $uploadedProduct = [];
         $isError = false;
-
+        $count = 0;
+        
         foreach($this->chunk as $data) {
             foreach($data as $key => $arr) {
+                $count++;
 
                 $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
 
+                
                 if (! empty($uploadedProduct)) {
                     $isError = true;
                     $errorArray['error'] = json_encode($uploadedProduct['error']);
                     $records[$key] = (object) array_merge($errorArray, $arr);
+                    // store validation for products which is not uploads.
+                    session()->push('notUploadedProduct', $errorArray);
                 }
             }
         }
+        
+        if ($this->countCSV == $count) {
+            session()->put('message', "CSV Product Successfully Imported");
+        }
 
-        if ($isError) {
+        if ($isError) {    
+
             Excel::store(new DataGridExport(collect($records)), 'error-csv-file/'.$this->dataFlowProfileRecord->profiler->id.'/'.Str::random(10).'.csv');
         }
 

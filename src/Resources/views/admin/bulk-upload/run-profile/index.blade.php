@@ -113,8 +113,7 @@
                     </select>
                 </div>
                 <div class="control-group product-uploading-message">
-                    <p id="timer">00:00:00</p>
-                    <span></span>
+                    <p v-if="running">Time Taken: @{{ formattedTime }}</p>
                 </div>
 
                 <div class="page-action" v-if="this.product_file_id != '' && this.product_file_id != 'Please Select'">
@@ -127,14 +126,16 @@
                     </span>
                 </div>
             </form>
+            <br>
             <div class="control-group scrollStyle">
-                <ul v-for="(item, index) in uploadedProductList" :key="index">
-                    <li>Uploaded Product record:- @{{ item.id }} @{{ item.sku }} @{{ item.type }}</li>
+                <ul>
+                    <li v-for="(item, index) in uploadedProductList" :key="index">Uploaded product record:- @{{ item.id }} @{{ item.sku }} @{{ item.type }}</li>
                 </ul>
             </div>
+            <br>
             <div class="control-group scrollStyle">
-                <ul v-for="(item, index) in  notUploadedProductList" :key="index">
-                    <li>@{{ item.error }}</li>
+                <ul>
+                    <li v-for="(item, index) in  notUploadedProductList" :key="index">Not uploaded product validation record:- @{{ item.error }}</li>
                 </ul>
             </div>
 
@@ -200,12 +201,33 @@
                     notUploadedProductList:[],
                     errorCsvFile: [],
                     profilerNames: '',
+                    stopInterval:'',
+                    status:false,
+                    startTime: 0,
+                    timer: {
+                        seconds: 0,
+                        minutes: 0,
+                        interval: null,
+                    },
+                    running: false,
                 }
+            },
+
+            mounted() {
+                this.loadStoredTimer();
+                this.resetTimer();
+                this.getUploadedProductAndProductValidation(this.status = true);
             },
 
             computed: {
                 isDisabled() {
                     return this.product_file_id === '' || this.product_file_id === 'Please Select';
+                },
+
+                formattedTime() {
+                    constminutes = Math.floor(this.timer.seconds / 60);
+                    constseconds = this.timer.seconds % 60;
+                    return `${constminutes} minutes ${constseconds} seconds`;
                 },
             },
 
@@ -273,12 +295,10 @@
                 },
 
                 runProfiler: function(e) {
-                    let ret = document.getElementById("timer");
-                    this.getUploadedProductAndProductValidation();
+                    
+                    this.getUploadedProductAndProductValidation(this.status = true);
 
-                    interval = setInterval(function() {
-                        ret.innerHTML = convertSec(counter++);
-                    }, 1000);
+                    this.startTimer();
 
                     const id = this.product_file_id
                     this.product_file_id = '';
@@ -290,17 +310,25 @@
                         bulk_product_importer_id: this.bulk_product_importer_id
                     })
                     .then((result) => {
-                        // clearInterval(interval);
+                        const uri = "{{ route('admin.bulk-upload.upload-file.run-profile.read-csv') }}";
+
                         window.flashMessages = [{
                             'type': 'alert-success',
                             'message': result.data.message
                         }];
-
+                        
                         this.$root.addFlashMessages();
-
-                        setTimeout(function() {
-                            location.reload();
-                        }, 500);
+                        
+                        if (result.data.success == true) {
+                            this.getUploadedProductAndProductValidation(this.status = false);
+                           
+                            this.stopTimer();
+                            
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1000);
+                        }
+                        
                     })
                     .catch(function (error) {
                     })
@@ -310,7 +338,6 @@
                 },
 
                 getErrorCsvFile: function(e) {
-
                     const uri = "{{ route('admin.bulk-upload.upload-file.run-profile.download-csv') }}"
 
                     this.$http.get(uri)
@@ -345,44 +372,87 @@
 
                 getUploadedProductAndProductValidation: function(e) {
                     const uri = "{{ route('admin.bulk-upload.upload-file.uploaded-product.or-not-uploaded-product') }}"
-                    
-                    this.$http.get(uri)
+                    var self = this;
+                    this.$http.post(uri,{
+                        status:this.status
+                    })
                         .then((result) => {
                             if (result.data) {
                                 this.uploadedProductList = result.data.message.uploadedProduct;
                                 this.notUploadedProductList = result.data.message.notUploadedProduct;
+                                
+                                if (result.data.isFileUploadComplete) {
+                                    this.stopTimer();
+                                }
+
+                                if (result.data.success) {
+                                    window.flashMessages = [{
+                                        'type': 'alert-success',
+                                        'message': result.data.success
+                                    }];
+
+                                    this.$root.addFlashMessages();
+                                }
+                            }
+                            
+                            if (result.data.status == true) {
+                                setTimeout(function() {
+                                    self.getUploadedProductAndProductValidation(this.status = true);
+                                }, 3000);
                             }
                         })
                         .catch(function (error) {
                             console.log(error);
                         });
+                },
 
-                        setTimeout(() => {
-                            this.getUploadedProductAndProductValidation();
-                        },1000);
-
+                startTimer() {
+                    if (!this.running) {
+                        this.startTime = new Date().getTime() - (this.timer.seconds * 1000);
+                        this.timer.interval = setInterval(this.updateTimer, 1000); // Update every second
+                        this.running = true;
+                        this.storeTimerState();
+                    }
+                },
+                resetTimer() {
+                    this.timer.seconds = 0;
+                    this.startTime = new Date().getTime();
+                    this.storeTimerState();
+                },
+                updateTimer() {
+                    constcurrentTime = new Date().getTime();
+                    constelapsedTime = Math.floor((constcurrentTime - this.startTime) / 1000);
+                    this.timer.seconds = constelapsedTime;
+                    this.storeTimerState();
+                },
+                stopTimer() {
+                    clearInterval(this.timer.interval);
+                    // this.running = false;
+                    // this.storeTimerState();
+                },
+                storeTimerState() {
+                    localStorage.setItem('timerState', JSON.stringify({
+                        running: this.running,
+                        startTime: this.startTime,
+                        seconds: this.timer.seconds,
+                    }));
+                },
+                loadStoredTimer() {
+                    conststoredState = localStorage.getItem('timerState');
+                    
+                    if (conststoredState) {
+                        const { running, startTime, seconds } = JSON.parse(conststoredState);
+                        this.running = running;
+                        this.startTime = startTime;
+                        this.timer.seconds = seconds;
+                        
+                        if (running) {
+                            this.timer.interval = setInterval(this.updateTimer, 1000);
+                        }
+                    }
                 },
             }
         });
-        
-        let counter = 0;
-        let interval;
-
-        function convertSec(cnt) {
-            let sec = cnt % 60;
-            let min = Math.floor(cnt / 60);
-            if (sec < 10) {
-                if (min < 10) {
-                    return "0" + min + ":0" + sec;
-                } else {
-                    return min + ":0" + sec;
-                }
-            } else if ((min < 10) && (sec >= 10)) {
-                return "0" + min + ":" + sec;
-            } else {
-                return min + ":" + sec;
-            }
-        }
     </script>
  
 
