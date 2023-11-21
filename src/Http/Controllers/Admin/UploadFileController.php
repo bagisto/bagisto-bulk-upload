@@ -334,9 +334,8 @@ class UploadFileController extends Controller
 
     public function downloadCsv()
     {
-        
         $folderPath = public_path('storage/error-csv-file');
-        
+
         // Check if the folder exists
         if (!File::exists($folderPath)) {
             // If it doesn't exist, create it
