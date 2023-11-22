@@ -129,7 +129,7 @@
             <br>
             <div class="control-group scrollStyle">
                 <ul>
-                    <li v-for="(item, index) in uploadedProductList" :key="index">Uploaded product record:- @{{ item.id }} @{{ item.sku }} @{{ item.type }}</li>
+                    <li v-for="(item, index) in uploadedProductList" :key="index">Uploaded product record:- Product id: @{{ item.id }} Product SKU: @{{ item.sku }} Product type: @{{ item.type }}</li>
                 </ul>
             </div>
             <br>
