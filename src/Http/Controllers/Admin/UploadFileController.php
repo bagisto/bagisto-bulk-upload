@@ -274,7 +274,6 @@ class UploadFileController extends Controller
         $batch->add(new ProductUploadJob($imageZipName, $productFileRecord, $chunks, $countCSV));
                
         // $productFileRecord->delete();
-        session()->put('isFileUploadComplete', true);
         
         return response()->json([
             "success" => true,
@@ -416,6 +415,8 @@ class UploadFileController extends Controller
         return $csvData;
     }
     
+    
+    // Get Uploaded and not uploaded product detail
     public function getUploadedProductOrNotUploadedProduct()
     {   
         $data = [];
@@ -434,8 +435,9 @@ class UploadFileController extends Controller
 
         if (session()->has('isFileUploadComplete')) {
             $isFileUploadComplete = session()->get('isFileUploadComplete');
+            $status = false;
         }
-
+        
         if (session()->has('message')) {
             $message = session()->get('message');
             $status = false;

@@ -74,7 +74,6 @@ class SimpleProductRepository extends BaseRepository
             //Validation
             $createValidation = $this->helperRepository->createProductValidation($csvData, $key);
             
-            
             if (isset($createValidation)) {
 
                 return $createValidation;
@@ -117,6 +116,7 @@ class SimpleProductRepository extends BaseRepository
                 Event::dispatch('catalog.product.create.after', $product);
             }
             
+            // store uploaded product in session
             if (! empty($product)) {
                 $uploadedProduct = [
                     'id'    => $product->id,
@@ -126,6 +126,7 @@ class SimpleProductRepository extends BaseRepository
 
                 session()->push('uploadedProduct', $uploadedProduct);
             }
+
             // Process product attributes
             $data = $this->processProductAttributes($csvData, $product);
 

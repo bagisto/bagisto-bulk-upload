@@ -32,6 +32,7 @@ class ProductUploadJob implements ShouldQueue
      */
     public function handle()
     {
+        // flush session when the new product uploading
         session()->forget('notUploadedProduct');
         session()->forget('uploadedProduct');
         session()->forget('isFileUploadComplete');
@@ -49,7 +50,6 @@ class ProductUploadJob implements ShouldQueue
                 $count++;
 
                 $uploadedProduct = $simpleProductRepository->createProduct($this->imageZipName, $this->dataFlowProfileRecord, $arr, $key);
-
                 
                 if (! empty($uploadedProduct)) {
                     $isError = true;
@@ -60,9 +60,10 @@ class ProductUploadJob implements ShouldQueue
                 }
             }
         }
-        
+        // After Uploded Product store success message in session
         if ($this->countCSV == $count) {
             session()->put('message', "CSV Product Successfully Imported");
+            session()->put('isFileUploadComplete', true);
         }
 
         if ($isError) {    
