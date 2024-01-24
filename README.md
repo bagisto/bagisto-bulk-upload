@@ -1,5 +1,7 @@
 # Bagisto Bulk Upload
 
+[![Latest Stable Version](http://poser.pugx.org/bagisto/bagisto-bulk-upload/v)](https://packagist.org/packages/bagisto/bagisto-bulk-upload) [![Total Downloads](http://poser.pugx.org/bagisto/bagisto-bulk-upload/downloads)](https://packagist.org/packages/bagisto/bagisto-bulk-upload) [![Latest Unstable Version](http://poser.pugx.org/bagisto/bagisto-bulk-upload/v/unstable)](https://packagist.org/packages/bagisto/bagisto-bulk-upload) [![License](http://poser.pugx.org/bagisto/bagisto-bulk-upload/license)](https://packagist.org/packages/bagisto/bagisto-bulk-upload)
+
 By using this add-on, the admin can mass/bulk upload products of all types: simple, configurable, virtual, grouped, bundle, downloadable, booking.
 
 It packs in lots of demanding features that allows your business to scale in no time:
