@@ -1,1 +1,1 @@
-<link rel="stylesheet" href="{{ asset('themes/default/assets/css/bulk-admin.css') }}">
+<link rel="stylesheet" href="{{ asset('/vendor/webkul/admin/assets/css/bulk-upload-admin.css') }}">
