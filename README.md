@@ -14,36 +14,8 @@ It packs in lots of demanding features that allows your business to scale in no 
 
 ## Requirements:
 
-- **Bagisto**: v1.3.3
-
-## Installation with composer:
-- Run the following command
-```
-composer require bagisto/bagisto-bulk-upload
-```
-
-- Goto vendor/bagisto/bagisto-bulkupload and copy the storage folder and merge it into the root of your project.
-
-- Goto config/concord.php file and add following line under 'modules'
-```php
-\Webkul\Bulkupload\Providers\ModuleServiceProvider::class
-```
-
-- Run these commands below to complete the setup
-```
-composer dump-autoload
-```
-
-```
-php artisan migrate
-php artisan storage:link
-php artisan route:cache
-php artisan config:cache
-php artisan vendor:publish
-```
--> Press 0 and then press enter to publish all assets and configurations.
-
-## Installation without composer:
+- **Bagisto**: v1.5.1
+## Installation:
 
 - Unzip the respective extension zip and then merge "packages" and "storage" folders into project root directory.
 - Goto config/app.php file and add following line under 'providers'
@@ -86,6 +58,11 @@ php artisan route:cache
 php artisan vendor:publish
 
 -> Press 0 and then press enter to publish all assets and configurations.
+```
+
+
+```
+Move storage/app/public/download/sample-files into root/storage/app/public/download/
 ```
 
 > That's it, now just execute the project on your specified domain.
