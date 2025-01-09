@@ -1,3 +1,9 @@
+## ⚠️ Disclaimer
+
+This repository is no longer maintained as the bulk upload feature is already available in the core.
+
+For the latest updates and features, please refer to the main [core](https://github.com/bagisto/bagisto) repository.
+
 # Bagisto Bulk Upload
 
 [![Latest Stable Version](http://poser.pugx.org/bagisto/bagisto-bulk-upload/v)](https://packagist.org/packages/bagisto/bagisto-bulk-upload) [![Total Downloads](http://poser.pugx.org/bagisto/bagisto-bulk-upload/downloads)](https://packagist.org/packages/bagisto/bagisto-bulk-upload) [![License](http://poser.pugx.org/bagisto/bagisto-bulk-upload/license)](https://packagist.org/packages/bagisto/bagisto-bulk-upload)
